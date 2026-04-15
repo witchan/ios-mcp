@@ -1,0 +1,261 @@
+			<panel>
+				<label>116.0: 2024/11/28</label>
+				<fieldset>
+					<div><label>Added support for all iOS versions up to iOS 18.2.</label></div>
+					<div><label>No other changes were made to AppSync Unified's functionality or code.</label></div>
+				</fieldset>
+				<label>114.0: 2023/10/23</label>
+				<fieldset>
+					<div><label>Added support for all iOS versions up to iOS 16.7.</label></div>
+					<div><label>AppSync Unified now requires ElleKit 1.1 or newer to be installed on "rootless" mode jailbreaks, as earlier versions are incompatible with AppSync Unified (and perhaps other tweaks) due to a bug. For more information, please see <a href="https://github.com/akemin-dayo/AppSync/issues/174" target="_blank">GitHub issue #174</a>. <strong>Thanks to Évelyne for her hard work in fixing ElleKit!</strong></label></div>
+					<div><label>No actual changes were made to AppSync Unified in order to achieve this, but AppSync Unified will now work with all known "rootless" mode jailbreaks as long as the requisite version of ElleKit is installed.</label></div>
+				</fieldset>
+				<label>112.0: 2023/07/03</label>
+				<fieldset>
+					<div><label>Added support for all iOS versions up to iOS 16.5.1.</label></div>
+					<div><label>Added support for "rootless" mode jailbreaks. ※ Users using the Dopamine jailbreak may encounter issues.</label></div>
+					<div><label>Made many internal refactors and improvements to AppSync Unified's code and associated tooling.</label></div>
+					<div><label>Improved the functionality of <code>asu_inject</code> and added support for <code>inject_criticald</code> for wider jailbreak support. (※ No jailbreak that uses <code>inject_criticald</code> requires the use of <code>asu_inject</code> — this is simply a futureproofing measure.)</label></div>
+					<div><label>Improved documentation regarding userspace reboot.</label></div>
+					<div><label>Removed the <code>arm64e</code> architecture slice from binaries that did not need one.</label></div>
+				</fieldset>
+				<label>110.0: 2023/03/30</label>
+				<fieldset>
+					<div><label>Added support for iOS 16.3.1.</label></div>
+					<div><label>No other changes were made to AppSync Unified's functionality or code.</label></div>
+				</fieldset>
+				<label>108.0: 2023/01/29</label>
+				<fieldset>
+					<div><label>Added support for iOS 16.3.</label></div>
+					<div><label>No other changes were made to AppSync Unified's functionality or code.</label></div>
+				</fieldset>
+				<label>106.0: 2022/12/20</label>
+				<fieldset>
+					<div><label>Added full support for iOS 15.0 〜 16.2.</label></div>
+					<div><label>Added support for the <code>SignerType</code> key to ASU's fake codesigning info dictionary, which is required by iOS 15 and above in order to successfully install fakesigned applications.</label></div>
+					<div><label>AppSync Unified now declares all fakesigned apps as originating from the App Store.</label></div>
+					<div><label>Made multiple improvements to the package installation flow. The <code>CFUserNotification</code> now no longer blocks the main thread, and is now only ever shown if the user is installing the package from an actual APT GUI frontend that implements the <code>${CYDIA}</code> environment variable (such as Cydia, Zebra, or Sileo).</label></div>
+					<div><label>Changed package ID to <code>ai.akemi.appsyncunified</code>.</label></div>
+				</fieldset>
+				<label>104.0: 2021/11/28</label>
+				<fieldset>
+					<div><label>Added support for iOS 14.8.1.</label></div>
+					<div><label>No other changes were made to AppSync Unified's functionality or code.</label></div>
+				</fieldset>
+				<label>102.0: 2021/09/19</label>
+				<fieldset>
+					<div><label>Added support for iOS 14.8.</label></div>
+					<div><label>No other changes were made to AppSync Unified's functionality or code.</label></div>
+				</fieldset>
+				<label>100.0: 2021/07/28</label>
+				<fieldset>
+					<div><label>Added support for iOS 14.7 and 14.7.1.</label></div>
+					<div><label>No other changes were made to AppSync Unified's functionality or code.</label></div>
+				</fieldset>
+				<label>98.0: 2021/06/01</label>
+				<fieldset>
+					<div><label>Added support for iOS 14.6.</label></div>
+					<div><label>No other changes were made to AppSync Unified's functionality or code.</label></div>
+				</fieldset>
+				<label>96.0: 2021/05/14</label>
+				<fieldset>
+					<div><label>Added support for iOS 14.5.1.</label></div>
+					<div><label>No other changes were made to AppSync Unified's functionality or code.</label></div>
+				</fieldset>
+				<label>94.0: 2021/04/30</label>
+				<fieldset>
+					<div><label>Added support for iOS 14.5.</label></div>
+					<div><label>No other changes were made to AppSync Unified's functionality or code.</label></div>
+				</fieldset>
+				<label>92.0: 2021/04/02</label>
+				<fieldset>
+					<div><label>Added support for iOS 14.4.2.</label></div>
+					<div><label>No other changes were made to AppSync Unified's functionality or code.</label></div>
+				</fieldset>
+				<label>90.0: 2021/02/11</label>
+				<fieldset>
+					<div><label>Heavily rewrote AppSync Unified to <em>finally</em> add support for all current iOS 14.x versions (14.0 to 14.4). Thank you for remaining patient — a lot of research and work had to be done to make this possible.</label></div>
+					<div><label>Made significant improvements to the fake signing information that AppSync Unified presents to all versions of iOS.</label></div>
+					<div><label>Added code directory hash value (cdhash) calculation support.</label></div>
+					<div><label>AppSync Unified now also bypasses FrontBoard's signature verification functionality.</label></div>
+					<div><label>Fixed a bug where AppSync Unified wouldn't always work properly on iOS 5 and 6 in certain rare cases.</label></div>
+					<div><label>Added a notification during install time telling users to reboot (or ldrestart) if AppSync Unified does not appear to be working immediately after installation.</label></div>
+					<div><label>Fixed a bug where Cydia Substrate would sometimes not be installed when it… should be.</label></div>
+				</fieldset>
+				<label>84.0: 2020/09/02</label>
+				<fieldset>
+					<div><label>Added support for iOS 13.7.</label></div>
+					<div><label>No other changes were made to AppSync Unified's functionality or code.</label></div>
+				</fieldset>
+				<label>82.0: 2020/08/14</label>
+				<fieldset>
+					<div><label>Added support for iOS 13.6.1.</label></div>
+					<div><label>No other changes were made to AppSync Unified's functionality or code.</label></div>
+				</fieldset>
+				<label>80.0: 2020/06/20</label>
+				<fieldset>
+					<div><label>Added support for iOS 13.6.</label></div>
+					<div><label>No other changes were made to AppSync Unified's functionality or code.</label></div>
+				</fieldset>
+				<label>78.0: 2020/06/14</label>
+				<fieldset>
+					<div><label>Added support for iOS 13.5.1 and 13.5.5~b1.</label></div>
+					<div><label>No other changes were made to AppSync Unified's functionality or code.</label></div>
+				</fieldset>
+				<label>76.0: 2020/05/21</label>
+				<fieldset>
+					<div><label>Added support for iOS 13.5.</label></div>
+					<div><label>No other changes were made to AppSync Unified's functionality or code.</label></div>
+				</fieldset>
+				<label>74.0: 2020/04/12</label>
+				<fieldset>
+					<div><label>Added support for iOS 13.4.1.</label></div>
+					<div><label>Added some more third-party modified package IDs to the Conflicts blacklist.</label></div>
+					<div><label>No other changes were made to AppSync Unified's functionality or code.</label></div>
+				</fieldset>
+				<label>72.0: 2020/03/20</label>
+				<fieldset>
+					<div><label>Added support for iOS 13.4.</label></div>
+					<div><label>Added some more third-party modified package IDs to the Conflicts blacklist.</label></div>
+					<div><label>No other changes were made to AppSync Unified's functionality or code.</label></div>
+				</fieldset>
+				<label>70.0: 2019/12/14</label>
+				<fieldset>
+					<div><label>Fixes an issue where AppSync Unified would sometimes not work for some users that have arm64e (A12/A12X) devices.</label></div>
+					<div><label>No other changes were made to AppSync Unified's functionality or code.</label></div>
+				</fieldset>
+				<label>68.0: 2019/12/11</label>
+				<fieldset>
+					<div><label>Minor update that resolves an edge case where users using the Meridian jailbreak on iOS 10 (which uses Substitute and not Substrate) would be unable to install AppSync Unified due to an oversight in the dependency resolution logic.</label></div>
+					<div><label>No other changes were made to AppSync Unified's functionality or code.</label></div>
+					<div><label>Thanks to Jacqueline for notifying me of this bug and for testing the new dependency resolution logic on her Meridian device!</label></div>
+				</fieldset>
+				<label>66.0: 2019/12/05</label>
+				<fieldset>
+					<div><label>Minor update that eliminates the rare case where users with broken versions of Substitute installed would fail a dependency resolution check, prompting their package manager to try and uninstall Substitute along with all their tweaks.</label></div>
+					<div><label>No other changes were made to AppSync Unified's functionality or code.</label></div>
+					<div><label>Thanks to <a href="https://twitter.com/NikkiNikkiTembo" target="_blank">Nicole</a> for letting me use her iOS 13 devices (D22, N69u) to test!! <3</label></div>
+				</fieldset>
+				<label>65.0: 2019/11/14</label>
+				<fieldset>
+					<div><label>Fixed a code injection bug causing AppSync Unified to not take effect until after a reboot or ldrestart was performed.</label></div>
+					<div><label>Added compatibility with iOS 13.3 beta for all devices.</label></div>
+					<div><label>Thanks to <a href="https://twitter.com/NikkiNikkiTembo" target="_blank">Nicole</a> for letting me use her iOS 13 devices (D22, N69u) to test!! <3</label></div>
+				</fieldset>
+				<label>64.0: 2019/11/12</label>
+				<fieldset>
+					<div><label>Added compatibility with all iOS 12 and 13 versions up to 13.2.2 for all devices.</label></div>
+				</fieldset>
+				<label>60.0: 2019/10/25</label>
+				<fieldset>
+					<div><label>Finally added full compatibility with all A12 (arm64e) devices running both unc0ver and Chimera!</label></div>
+					<div><label>Fixed an issue where Chimera and Electra users with devices using an A11 or lower SoC would be unable to install AppSync Unified.</label></div>
+				</fieldset>
+				<label>48.0-NoChimera: 2019/10/23</label>
+				<fieldset>
+					<div><label>Finally added compatibility with A12 (arm64e) devices running the unc0ver jailbreak! <strong>(Chimera is NOT supported at this time due to technical restraints.)</strong></label></div>
+				</fieldset>
+				<label>41.1-NoA12: 2019/08/19</label>
+				<fieldset>
+					<div><label>Added compatibility with iOS 12.4 for all devices <strong>EXCEPT A12 devices</strong>.</label></div>
+				</fieldset>
+				<label>41.0-NoA12: 2019/08/15</label>
+				<fieldset>
+					<div><label>Added compatibility with iOS 12.1.x, 12.2.x, and 12.3 beta for all devices <strong>EXCEPT A12 devices</strong>.</label></div>
+				</fieldset>
+				<label>40.0: 2019/05/27</label>
+				<fieldset>
+					<div><label><strike style="text-decoration: line-through;">Added compatibility with arm64e SoCs (A12/A12X).</strike></label></div>
+					<div><label>Updated URLs where relevant to reflect my new domain (akemi.ai).</label></div>
+				</fieldset>
+				<label>32.0: 2019/02/24</label>
+				<fieldset>
+					<div><label>Added compatibility with iOS 12 (verified up to 12.1.2).</label></div>
+				</fieldset>
+				<label>31.1: 2018/07/23</label>
+				<fieldset>
+					<div><label>Modified Depends line to properly allow installation on the iOS 11.4 betas, as the previous one apparently does not work for the betas.</label></div>
+				</fieldset>
+				<label>31.0: 2018/07/23</label>
+				<fieldset>
+					<div><label>Fixed an issue on iOS 5 where AppSync Unified would not work at all due to an undocumented change in Theos causing default deployment target to be set incorrectly, thus generating binaries that could not be properly run on iOS 5.</label></div>
+				</fieldset>
+				<label>30.0: 2018/07/10</label>
+				<fieldset>
+					<div><label>Confirmed compatibility with all supported iOS versions up to iOS 11.4.</label></div>
+					<div><label>Artificially bumped version number to 30.0 to override all known third-party modifications of AppSync Unified available from piracy repos that will cause damage to your iOS installation. Please <strong>DO NOT</strong> use AppSync Unified for piracy.</label></div>
+				</fieldset>
+				<label>24.0: 2018/06/21</label>
+				<fieldset>
+					<div><label>Confirmed compatibility with all supported iOS versions up to iOS 11.3.1.</label></div>
+					<div><label>Artificially bumped version number to 24.0 to override all known third-party modifications of AppSync Unified available from piracy repos that will cause damage to your iOS installation. Please <strong>DO NOT</strong> use AppSync Unified for piracy.</label></div>
+				</fieldset>
+				<label>9.0: 2018/02/28</label>
+				<fieldset>
+					<div><label>Artificially bumped version number to 9.0 to solve installation issues caused by certain third-party piracy repos making an unofficial modification with a version number of "8.2". Please do not use AppSync Unified for piracy.</label></div>
+				</fieldset>
+				<label>6.1: 2018/02/26</label>
+				<fieldset>
+					<div><label>Added compatibility with iOS 11.</label></div>
+					<div><label>Fixed a (benign) bug where `asu_inject` would get erroneously enabled on some 32-bit devices.</label></div>
+				</fieldset>
+				<label>6.0.1: 2017/09/21</label>
+				<fieldset>
+					<div><label>Re-enabled `asu_inject` on 32-bit devices running the Phœnix iOS 9.3.5 jailbreak to work around a bug where rebooting and kickstarting the jailbreak would cause AppSync Unified to cease to function.</label></div>
+					<div><label>Refactored many parts of AppSync Unified's code and removed many things that are no longer in use.</label></div>
+				</fieldset>
+				<label>6.0~b2: 2017/07/31</label>
+				<fieldset>
+					<div><label>Minor packaging change. No functionality changes were made.</label></div>
+				</fieldset>
+				<label>6.0~b1: 2017/02/13</label>
+				<fieldset>
+					<div><label>Return the public "Apple iPhone OS Application Signing" intermediate certificate instead of `kSecMagicBytes` on iOS 10 to avoid a Security.framework crash — thanks JulioVerne!</label></div>
+				</fieldset>
+				<label>5.8: 2016/01/30</label>
+				<fieldset>
+					<div><label>Prevented AppSync Unified from excessively performing synchronous calls to NSLog(), which improves uicache performance a bit.</label></div>
+				</fieldset>
+				<label>5.6-1: 2015/07/18</label>
+				<fieldset>
+					<div><label>Fixed uicache causing installd to crash while executing ASU's copyEntitlementDataFromFile on iOS 8.3/8.4</label></div>
+					<div><label>Fixed installing certain types of apps on iOS 8.3/8.4</label></div>
+				</fieldset>
+				<label>5.5-1: 2015/06/28</label>
+				<fieldset>
+					<div><label>Quick and dirty workaround for ASU problems on iOS 8.3.</label></div>
+				</fieldset>
+				<label>5.4.1-1: 2015/04/08</label>
+				<fieldset>
+					<div><label>Better (less dirty) fix to the copyEntitlementDataFromFile crash. Just check if super->count is > -1.</label></div>
+				</fieldset>
+				<label>5.4-1: 2015/04/08</label>
+				<fieldset>
+					<div><label>Fixed a bug where users would experience an installd crash whenever uicache was being run against apps with malformed entitlements from Cydia</label></div>
+				</fieldset>
+				<label>5.3-1: 2014/12/07</label>
+				<fieldset>
+					<div><label>Fixed a bug where users using the TaiG iOS 8.1.1 jailbreak would not get ASU successfully injected into installd at install-time due to com.apple.mobile.installd being in an unexpected location.</label></div>
+					<div><label>Removes other mirrored AppSync Unified packages found on other repositories that cause issues when the user attempts to install AppSync Unified.</label></div>
+				</fieldset>
+				<label>5.2-1: 2014/11/12</label>
+				<fieldset>
+					<div><label>Modified DEBIAN control file to add more mirrored package IDs.</label></div>
+				</fieldset>
+				<label>5.1-1: 2014/11/12</label>
+				<fieldset>
+					<div><label>Major rewrite of AppSync Unified to fully support iOS 8.</label></div>
+				</fieldset>
+				<label>4.5-1: 2014/07/21</label>
+				<fieldset>
+					<div><label>Modified NSLog behaviour to check to see if AppSync Unified is installed.</label></div>
+				</fieldset>
+				<label>4.4-1: 2014/07/01</label>
+				<fieldset>
+					<div><label>Added more PPSync package IDs to the removal list.</label></div>
+				</fieldset>
+				<label>1.0~4.3-1: 2013 ~ 2014</label>
+				<fieldset>
+					<div><label>Various bugfixes, various PPSync package IDs added to removal list.</label></div>
+				</fieldset>
+			</panel>

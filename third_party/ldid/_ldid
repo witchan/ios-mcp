@@ -1,0 +1,19 @@
+#compdef ldid ldid2
+
+_arguments \
+	'-S-[Add signature]:entitlements:_files' \
+	'-w[Shallow sign]' \
+	'-Q-[Embed requirements]:requirements:_files' \
+	'(-S)-r[Remove signature]' \
+	'(-r)-h[Print signature information]' \
+	'-q[Print requirements]' \
+	'-e[Print entitlements]' \
+	'-M[Merge entitlements]' \
+	'*-C-[Flags]:flags:(adhoc enforcement expires hard host kill library-validation restrict runtime linker-signed)' \
+	'-H-[Hash type]:hash:(sha1 sha256)' \
+	'-I-[Set identifier]:identifier' \
+	'-K-[Signing private key]:key:_files' \
+	'-P-[Set as platform]:number' \
+	'-U-[Password for -K]' \
+	'-T-[Set team identifier]:identifier' \
+	'*: :_files'

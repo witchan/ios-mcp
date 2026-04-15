@@ -1,0 +1,167 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="89" y1="58" x2="1188" y2="666" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#09111F"/>
+      <stop offset="0.52" stop-color="#0E2136"/>
+      <stop offset="1" stop-color="#081018"/>
+    </linearGradient>
+    <radialGradient id="glowLeft" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(316 266) rotate(31.6) scale(367 299)">
+      <stop stop-color="#1AE3C2" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#1AE3C2" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowRight" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1043 229) rotate(120) scale(309 327)">
+      <stop stop-color="#FF8B3D" stop-opacity="0.68"/>
+      <stop offset="1" stop-color="#FF8B3D" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="panel" x1="820" y1="143" x2="1044" y2="575" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#121F34"/>
+      <stop offset="1" stop-color="#0A1220"/>
+    </linearGradient>
+    <linearGradient id="panelStroke" x1="769" y1="123" x2="1081" y2="618" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3EE6CB" stop-opacity="0.7"/>
+      <stop offset="0.55" stop-color="#5FC8FF" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#FF975A" stop-opacity="0.6"/>
+    </linearGradient>
+    <linearGradient id="accentLine" x1="783" y1="242" x2="1100" y2="242" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1AE3C2"/>
+      <stop offset="1" stop-color="#FF9658"/>
+    </linearGradient>
+    <filter id="blurA" x="48" y="4" width="531" height="525" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+      <feGaussianBlur stdDeviation="56" result="effect1_foregroundBlur_1_1"/>
+    </filter>
+    <filter id="blurB" x="747" y="-47" width="592" height="552" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+      <feGaussianBlur stdDeviation="62" result="effect1_foregroundBlur_1_1"/>
+    </filter>
+    <filter id="shadow" x="731" y="104" width="395" height="541" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="16"/>
+      <feGaussianBlur stdDeviation="16"/>
+      <feComposite in2="hardAlpha" operator="out"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.0117647 0 0 0 0 0.0509804 0 0 0 0 0.101961 0 0 0 0.42 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_1"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_1" result="shape"/>
+    </filter>
+    <filter id="softShadow" x="744" y="186" width="260" height="100" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="12"/>
+      <feGaussianBlur stdDeviation="14"/>
+      <feComposite in2="hardAlpha" operator="out"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.027451 0 0 0 0 0.0784314 0 0 0 0 0.152941 0 0 0 0.38 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_1"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_1" result="shape"/>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="720" rx="36" fill="url(#bg)"/>
+  <g opacity="0.9">
+    <path d="M0 632C214 543 405 548 573 640" stroke="#16334B" stroke-width="2"/>
+    <path d="M0 588C232 511 440 519 622 617" stroke="#143149" stroke-width="2"/>
+    <path d="M0 541C248 476 470 486 661 592" stroke="#122C42" stroke-width="2"/>
+    <path d="M701 91C889 35 1064 67 1280 174" stroke="#16283A" stroke-width="2"/>
+    <path d="M635 41C838 -10 1037 23 1280 138" stroke="#102335" stroke-width="2"/>
+  </g>
+
+  <g filter="url(#blurA)">
+    <circle cx="313.5" cy="266.5" r="153.5" fill="url(#glowLeft)"/>
+  </g>
+  <g filter="url(#blurB)">
+    <circle cx="1043" cy="229" r="171" fill="url(#glowRight)"/>
+  </g>
+
+  <circle cx="103" cy="104" r="2.5" fill="#5FE0CB" fill-opacity="0.9"/>
+  <circle cx="136" cy="146" r="1.5" fill="#5FE0CB" fill-opacity="0.5"/>
+  <circle cx="507" cy="120" r="2" fill="#FF9658" fill-opacity="0.85"/>
+  <circle cx="1138" cy="121" r="2.5" fill="#5FE0CB" fill-opacity="0.6"/>
+  <circle cx="1184" cy="160" r="1.5" fill="#FF9658" fill-opacity="0.75"/>
+  <circle cx="1099" cy="572" r="2.5" fill="#5FE0CB" fill-opacity="0.7"/>
+  <circle cx="1161" cy="612" r="1.5" fill="#FF9658" fill-opacity="0.65"/>
+
+  <rect x="74" y="84" width="156" height="34" rx="17" fill="#0F2333" stroke="#1A455E"/>
+  <text x="152" y="107" text-anchor="middle" fill="#6EF0D6" font-size="16" font-family="PingFang SC, SF Pro Display, Helvetica, Arial, sans-serif" font-weight="600" letter-spacing="1.3">MCP SERVER</text>
+
+  <text x="78" y="220" fill="#F2F7FB" font-size="64" font-family="PingFang SC, SF Pro Display, Helvetica, Arial, sans-serif" font-weight="700">
+    <tspan x="78" dy="0">让 Claude、Codex</tspan>
+    <tspan x="78" dy="84">控制 iPhone</tspan>
+  </text>
+  <text x="82" y="386" fill="#84A2BE" font-size="24" font-family="PingFang SC, SF Pro Text, Helvetica, Arial, sans-serif" font-weight="500">
+    一个运行在越狱 iPhone 上的 MCP Server
+  </text>
+  <text x="82" y="426" fill="#6A849B" font-size="22" font-family="PingFang SC, SF Pro Text, Helvetica, Arial, sans-serif" font-weight="400">
+    AI 代理直接完成截图、点击、输入、UI 读取与 App 管理
+  </text>
+
+  <rect x="78" y="506" width="212" height="62" rx="24" fill="#0D1A28" stroke="#1F4055"/>
+  <text x="184" y="546" text-anchor="middle" fill="#EAF4FA" font-size="36" font-family="SF Pro Display, Helvetica, Arial, sans-serif" font-weight="800" letter-spacing="0.5">iOS MCP</text>
+
+  <g opacity="0.78">
+    <rect x="80" y="610" width="138" height="42" rx="21" fill="#102334"/>
+    <text x="149" y="637" text-anchor="middle" fill="#8DD9FF" font-size="18" font-family="SF Pro Text, Helvetica, Arial, sans-serif" font-weight="600">rootful</text>
+    <rect x="232" y="610" width="144" height="42" rx="21" fill="#102334"/>
+    <text x="304" y="637" text-anchor="middle" fill="#8DD9FF" font-size="18" font-family="SF Pro Text, Helvetica, Arial, sans-serif" font-weight="600">rootless</text>
+    <rect x="390" y="610" width="144" height="42" rx="21" fill="#102334"/>
+    <text x="462" y="637" text-anchor="middle" fill="#8DD9FF" font-size="18" font-family="SF Pro Text, Helvetica, Arial, sans-serif" font-weight="600">roothide</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="763" y="136" width="331" height="477" rx="46" fill="url(#panel)" stroke="url(#panelStroke)" stroke-width="2.5"/>
+    <rect x="784" y="166" width="289" height="414" rx="30" fill="#08121D"/>
+    <rect x="887" y="150" width="82" height="10" rx="5" fill="#142D41"/>
+    <circle cx="930" cy="596" r="14" fill="#102738" stroke="#244C61"/>
+  </g>
+
+  <g opacity="0.9">
+    <rect x="814" y="203" width="230" height="34" rx="17" fill="#0E1E2D"/>
+    <circle cx="836" cy="220" r="5.5" fill="#1AE3C2"/>
+    <circle cx="855" cy="220" r="5.5" fill="#5FC8FF"/>
+    <circle cx="874" cy="220" r="5.5" fill="#FF9658"/>
+    <text x="904" y="226" fill="#97B6CE" font-size="18" font-family="SF Pro Text, Helvetica, Arial, sans-serif" font-weight="500">Real Device Session</text>
+    <path d="M814 257H1045" stroke="url(#accentLine)" stroke-width="2"/>
+  </g>
+
+  <g filter="url(#softShadow)">
+    <rect x="772" y="214" width="204" height="56" rx="18" fill="#102437" stroke="#235873"/>
+    <text x="794" y="248" fill="#EAF4FA" font-size="22" font-family="SF Pro Text, Helvetica, Arial, sans-serif" font-weight="700">tap_screen()</text>
+  </g>
+  <rect x="873" y="289" width="157" height="50" rx="16" fill="#0E1C2B" stroke="#1D4058"/>
+  <text x="895" y="320" fill="#C8DCEC" font-size="20" font-family="SF Pro Text, Helvetica, Arial, sans-serif" font-weight="600">screenshot()</text>
+  <rect x="792" y="365" width="170" height="50" rx="16" fill="#0E1C2B" stroke="#1D4058"/>
+  <text x="814" y="396" fill="#C8DCEC" font-size="20" font-family="SF Pro Text, Helvetica, Arial, sans-serif" font-weight="600">get_ui_elements()</text>
+  <rect x="866" y="439" width="175" height="50" rx="16" fill="#0E1C2B" stroke="#1D4058"/>
+  <text x="888" y="470" fill="#C8DCEC" font-size="20" font-family="SF Pro Text, Helvetica, Arial, sans-serif" font-weight="600">install_app()</text>
+
+  <g opacity="0.72">
+    <path d="M807 241C775 280 760 319 790 377" stroke="#1AE3C2" stroke-width="2"/>
+    <path d="M977 242C1024 270 1040 311 1017 355" stroke="#FF9658" stroke-width="2"/>
+    <path d="M881 418C857 451 840 481 850 521" stroke="#5FC8FF" stroke-width="2"/>
+    <path d="M990 489C1022 510 1045 527 1060 555" stroke="#FF9658" stroke-width="2"/>
+  </g>
+
+  <circle cx="793" cy="378" r="6.5" fill="#1AE3C2"/>
+  <circle cx="1018" cy="354" r="6.5" fill="#FF9658"/>
+  <circle cx="850" cy="521" r="6.5" fill="#5FC8FF"/>
+  <circle cx="1060" cy="555" r="6.5" fill="#FF9658"/>
+
+  <rect x="604" y="171" width="108" height="108" rx="24" fill="#0D1B29" stroke="#1A3E55"/>
+  <path d="M636 200L657 179L679 200" stroke="#1AE3C2" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M657 179V237" stroke="#1AE3C2" stroke-width="8" stroke-linecap="round"/>
+  <path d="M634 246H681" stroke="#5FC8FF" stroke-width="8" stroke-linecap="round"/>
+  <text x="658" y="298" text-anchor="middle" fill="#7EA7C2" font-size="16" font-family="SF Pro Text, Helvetica, Arial, sans-serif">upload</text>
+
+  <rect x="585" y="498" width="144" height="94" rx="24" fill="#0D1B29" stroke="#1A3E55"/>
+  <text x="610" y="544" fill="#F3F8FC" font-size="18" font-family="SF Pro Text, Helvetica, Arial, sans-serif" font-weight="700">AI Agent</text>
+  <circle cx="676" cy="536" r="8" fill="#1AE3C2"/>
+  <circle cx="645" cy="563" r="8" fill="#5FC8FF"/>
+  <circle cx="705" cy="563" r="8" fill="#FF9658"/>
+  <path d="M676 536L645 563" stroke="#7FA3BD" stroke-width="2"/>
+  <path d="M676 536L705 563" stroke="#7FA3BD" stroke-width="2"/>
+  <path d="M645 563H705" stroke="#7FA3BD" stroke-width="2"/>
+
+  <path d="M552 228C612 216 664 229 715 264" stroke="#21455D" stroke-width="2"/>
+  <path d="M533 553C596 531 664 527 749 544" stroke="#21455D" stroke-width="2"/>
+</svg>

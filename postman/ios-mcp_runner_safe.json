@@ -1,0 +1,57 @@
+[
+  {
+    "tool_name": "get_screen_info",
+    "tool_args_json": "{}",
+    "notes": "Screen metadata"
+  },
+  {
+    "tool_name": "screenshot",
+    "tool_args_json": "{}",
+    "notes": "Screenshot payload"
+  },
+  {
+    "tool_name": "get_clipboard",
+    "tool_args_json": "{}",
+    "notes": "Clipboard read"
+  },
+  {
+    "tool_name": "list_apps",
+    "tool_args_json": "{\"type\":\"user\"}",
+    "notes": "Installed user apps"
+  },
+  {
+    "tool_name": "list_running_apps",
+    "tool_args_json": "{}",
+    "notes": "Running apps"
+  },
+  {
+    "tool_name": "get_frontmost_app",
+    "tool_args_json": "{}",
+    "notes": "Foreground app"
+  },
+  {
+    "tool_name": "get_ui_elements",
+    "tool_args_json": "{\"max_depth\":12,\"max_elements\":400}",
+    "notes": "Accessibility tree"
+  },
+  {
+    "tool_name": "get_element_at_point",
+    "tool_args_json": "{\"x\":100,\"y\":100}",
+    "notes": "Element lookup"
+  },
+  {
+    "tool_name": "get_device_info",
+    "tool_args_json": "{}",
+    "notes": "Device metadata"
+  },
+  {
+    "tool_name": "get_brightness",
+    "tool_args_json": "{}",
+    "notes": "Brightness read"
+  },
+  {
+    "tool_name": "get_volume",
+    "tool_args_json": "{}",
+    "notes": "Volume read"
+  }
+]

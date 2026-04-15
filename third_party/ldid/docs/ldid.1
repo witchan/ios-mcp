@@ -1,0 +1,232 @@
+.\"-
+.\" Copyright (c) 2021-2022 Procursus Team <team@procurs.us>
+.\" SPDX-License-Identifier: AGPL-3.0-or-later
+.\"
+.Dd January 20, 2022
+.Dt LDID 1
+.Os
+.Sh NAME
+.Nm ldid
+.Nd Link Identity Editor
+.Sh SYNOPSIS
+.Nm
+.Op Fl A Ns Ar cputype : Ns Ar subtype
+.Op Fl a
+.Op Fl C Ns Op Ar adhoc | Ar enforcement | Ar expires | Ar hard | Ar host | Ar kill | Ar library-validation | Ar restrict | Ar runtime
+.Op Fl D
+.Op Fl d
+.Op Fl E Ns Ar num : Ns Ar file
+.Op Fl e
+.Op Fl H Ns Op Ar sha1 | Ar sha256
+.Op Fl h
+.Op Fl I Ns Ar name
+.Op Fl K Ns Ar file Oo Fl U Ns Ar password Oc Op Fl X Ns Ar file
+.Op Fl M
+.Op Fl P Ns Op Ar num
+.Op Fl Q Ns Ar requirements
+.Op Fl q
+.Op Fl r | Fl S Ns Ar file.xml | Fl s
+.Op Fl t Ns Ar TeamID
+.Op Fl u
+.Op Fl w
+.Op Fl arch Ar arch_type
+.Ar
+.Sh DESCRIPTION
+.Nm
+adds SHA1 and SHA256 hashes to a Mach-O file so that they can be run
+on a system that has validation, but not signature verification.
+.Bl -tag -width -indent
+.It Fl A Ns Ar cputype : Ns Ar subtype
+When used with
+.Fl a , Fl D , Fl e , Fl h , Fl q ,
+or
+.Fl u ,
+only act on the slice specified by
+.Ar cputype
+and
+.Ar subtype .
+.Ar cputype
+and
+.Ar subtype
+should both be integers.
+.It Fl a
+Print the CPU types and subtypes in hexadecimal.
+.It Fl arch Ar arch_type
+The same as
+.Fl A ,
+except the name of the architecture is used.
+The list of currently known
+.Ar arch_type Ns s
+can be found in
+.Xr arch 3 .
+This is a Procursus extension.
+.It Fl C Ns Op Ar adhoc | Ar enforcement | Ar expires | Ar hard | Ar host | Ar kill | Ar library-validation | Ar restrict | Ar runtime | Ar linker-signed
+Specify the option flags to embed in the code signature.
+See
+.Xr codesign 1
+for details about these options.
+.It Fl D
+Reset the cryptid.
+.It Fl d
+Print the cryptid in the binaries if it exists.
+.It Fl E Ns Ar num : Ns Ar file
+Embed the hashes of
+.Ar file
+in the special codesign slot at
+.Ar num .
+.It Fl e
+Print the entitlements in each slice, or the slice specified by
+.Fl A
+or
+.Fl arch
+to
+.Ar stdout .
+.It Fl H Ns Op Ar sha1 | Ar sha256
+Disable the hash not specified.
+This is useful to replicate the default behavior of
+.Xr codesign 1 ,
+which only provides a sha256 signature.
+.It Fl h
+Print information about the signature, such as
+hash types, flags, CDHash, and CodeDirectory version to
+.Ar stdout .
+.It Fl I Ns Ar name
+Set the identifier used in the binaries signature to
+.Ar name .
+If not specified, the basename of the binary is used.
+.It Fl K Ns Ar file
+Sign using the identity in
+.Ar file .
+Must be either a
+.Ar p12
+or
+.Ar pkcs11:
+URI.
+This will give the binary a valid signature so that it can be run
+on a system with signature validation.
+If the
+.Ar p12
+has a password, you will be prompted for it,
+or you can specify from the command line with
+.Fl U .
+To specify the certificate separate from the private key, use
+.Fl X .
+.It Fl M
+When used with
+.Fl S ,
+merge the new and existing entitlements instead of replacing the existing
+entitlements.
+This is useful for adding a few specific entitlements to a
+handful of binaries.
+.It Fl P Ns Op Ar num
+Mark the Mach-O as a platform binary.
+If
+.Ar num
+is specified, the platform field in the CodeDirectory will be set to that number.
+The default number is 13, as per Apple binaries.
+Specifying the platform using
+.Fl P
+is a Procursus extension.
+.It Fl Q Ns Ar requirements.xml
+Embed the requirements found in
+.Ar requirements .
+.It Fl q
+Print embedded requirements of the binaries.
+.It Fl r
+Remove the signature from the Mach-O.
+.It Fl t Ns Ar TeamID
+Override the private key's TeamID with an invalid one.
+.It Fl S Ns Op Ar file.xml
+Pseudo-sign the Mach-O binaries.
+If
+.Ar file.xml
+is specified then the entitlements found in
+.Ar file.xml
+will be embedded in the Mach-O.
+.It Fl s
+Resign the Mach-O binaries while keeping the existing entitlements.
+.It Fl U Ns Ar password
+Use
+.Ar password
+as the password for the p12 certificate instead of prompting.
+This is a Procursus extension.
+.It Fl u
+If the binary was linked against UIKit, then print the UIKit version that the
+Mach-O binary was linked against.
+.It Fl w
+Shallow sign. Only the main binary of the specified bundle will be signed, as
+specified by
+.Ar CFBundleIdentifier
+in
+.Ar Info.plist .
+Any nested bundles and/or stray binaries will be completely
+left alone and interpreted at face-value. Applicable only when the signing
+target is a bundle directory, and not a specific Mach-O file.
+.Fl w
+can be used on any bundle, not just the root .app, including frameworks,
+appexes, and more.
+.It Fl X Ns Ar file
+Adds
+.Ar file 
+as a certificate to be used when signing.
+The first
+.Ar file
+must be the certificate for the signing key, each additional will be added as part of the chain.
+Must be either
+.Ar DER
+encoded certificate or
+.Ar pkcs11:
+URI.
+.El
+.Sh EXAMPLES
+To fakesign
+.Ar file
+with no entitlements
+.Pp
+.Dl "ldid -S file"
+.Pp
+To sign
+.Ar file
+using the key in
+.Ar /path/to/key.p12
+with entitlements found in
+.Ar ent.xml ,
+marking it as an adhoc signature
+.Pp
+.Dl "ldid -Cadhoc -K/path/to/key.p12 -Sent.xml file"
+.Pp
+To add entitlements from
+.Ar ent.xml
+to the entitlements already in
+.Ar file
+.Pp
+.Dl "ldid -S -Cadhoc,linker-signed file"
+.Pp
+will fakesign
+.Ar file
+with no entitlements, and mark it as adhoc and linker-signed signature.
+.Pp
+The command:
+.Pp
+.Dl "ldid -Sent.xml -M file"
+.Pp
+To save the entitlements found in each slice of
+.Ar file
+to
+.Ar ent.xml
+.Pp
+.Dl "ldid -e file > ent.xml"
+.Sh SEE ALSO
+.Xr codesign 1
+.Sh HISTORY
+The
+.Nm
+utility was written by
+.An Jay (\*qSaurik\*q) Freeman .
+iPhoneOS 1.2.0 and 2.0 support was added on April 6, 2008.
+.Fl S
+was added on June 13, 2008.
+SHA256 support was added on August 25, 2016, fixing iOS 11 support.
+iOS 14 support was added on July 31, 2020 by
+.An Kabir Oberai .
+iOS 15 support was added on June 11, 2021.

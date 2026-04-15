@@ -1,0 +1,36 @@
+/.DS_Store
+
+# Theos build artifacts
+/.theos/
+/packages/
+
+# IDE and local workspace files
+/.idea/
+/.vscode/
+/*.swp
+/*.swo
+*~
+
+# Local logs and temp artifacts
+*.log
+*.tmp
+*.temp
+/release
+.DS_Store
+
+
+*.o
+AppSync/.theos/*
+.theos-rootless/*
+debs/*
+*.deb
+*.dylib
+**/.theos/*
+**/.theos-rootless/*
+*/.theos/*
+*/.theos-rootless/*
+*.sublime-workspace
+_/*
+*/obj/*
+**/obj/*
+.claude

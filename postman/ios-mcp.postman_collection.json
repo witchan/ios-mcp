@@ -1,0 +1,1265 @@
+{
+  "info": {
+    "_postman_id": "fdb06367-0400-4b55-a407-c90c6ef5c69a",
+    "name": "ios-mcp",
+    "description": "Postman collection for exercising the ios-mcp HTTP/MCP endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const current = Number(pm.environment.get('request_id') || '1');",
+          "pm.environment.set('current_request_id', String(current));"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const current = Number(pm.environment.get('request_id') || '1');",
+          "pm.environment.set('request_id', String(current + 1));"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ]
+        },
+        "description": "Simple HTTP health probe."
+      }
+    },
+    {
+      "name": "Initialize",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"initialize\",\n  \"params\": {\n    \"protocolVersion\": \"2025-03-26\",\n    \"capabilities\": {},\n    \"clientInfo\": {\n      \"name\": \"Postman\",\n      \"version\": \"1.0\"\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/mcp",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mcp"
+          ]
+        },
+        "description": "Initialize the MCP session."
+      }
+    },
+    {
+      "name": "Tools List",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/list\",\n  \"params\": {}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/mcp",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mcp"
+          ]
+        },
+        "description": "List all tool definitions exposed by ios-mcp."
+      }
+    },
+    {
+      "name": "Generic Tool Call",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"{{tool_name}}\",\n    \"arguments\": {{tool_args_json}}\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/mcp",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mcp"
+          ]
+        },
+        "description": "Generic request for any ios-mcp tool. Change the environment variables `tool_name` and `tool_args_json`."
+      }
+    },
+    {
+      "name": "Buttons",
+      "item": [
+        {
+          "name": "press_volume_up",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"press_volume_up\",\n    \"arguments\": {\n      \"duration\": {{sample_duration_ms}}\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Press the volume up button."
+          }
+        },
+        {
+          "name": "press_volume_down",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"press_volume_down\",\n    \"arguments\": {\n      \"duration\": {{sample_duration_ms}}\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Press the volume down button."
+          }
+        },
+        {
+          "name": "press_power",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"press_power\",\n    \"arguments\": {\n      \"duration\": {{sample_duration_ms}}\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Press the power/sleep button. Disruptive."
+          }
+        },
+        {
+          "name": "press_home",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"press_home\",\n    \"arguments\": {\n      \"duration\": {{sample_duration_ms}}\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Press the home button. Disruptive."
+          }
+        },
+        {
+          "name": "toggle_mute",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"toggle_mute\",\n    \"arguments\": {\n      \"duration\": {{sample_duration_ms}}\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Toggle the mute switch. Disruptive."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Touch & Screen",
+      "item": [
+        {
+          "name": "tap_screen",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"tap_screen\",\n    \"arguments\": {\n      \"x\": {{sample_x}},\n      \"y\": {{sample_y}}\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Tap the screen at sample coordinates."
+          }
+        },
+        {
+          "name": "swipe_screen",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"swipe_screen\",\n    \"arguments\": {\n      \"fromX\": {{sample_x}},\n      \"fromY\": {{sample_y}},\n      \"toX\": {{sample_to_x}},\n      \"toY\": {{sample_to_y}},\n      \"duration\": {{sample_swipe_duration_ms}},\n      \"steps\": {{sample_steps}}\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Swipe from one point to another."
+          }
+        },
+        {
+          "name": "get_screen_info",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"get_screen_info\",\n    \"arguments\": {}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Return current screen size, scale, and orientation."
+          }
+        },
+        {
+          "name": "screenshot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"screenshot\",\n    \"arguments\": {}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Take a screenshot. Returns MCP image content, not text: result.content[0].type is image, mimeType is usually image/jpeg, and data contains the base64 JPEG payload."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clipboard",
+      "item": [
+        {
+          "name": "get_clipboard",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"get_clipboard\",\n    \"arguments\": {}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Read current clipboard contents."
+          }
+        },
+        {
+          "name": "set_clipboard",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"set_clipboard\",\n    \"arguments\": {\n      \"text\": \"{{sample_text}}\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Write text to the clipboard."
+          }
+        }
+      ]
+    },
+    {
+      "name": "File Transfer",
+      "item": [
+        {
+          "name": "upload_file",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"upload_file response includes path, filename, and size\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.keys([\"path\", \"filename\", \"size\"]);",
+                  "  pm.environment.set(\"uploaded_file_path\", body.path);",
+                  "  pm.environment.set(\"uploaded_file_name\", body.filename);",
+                  "  pm.environment.set(\"uploaded_file_size\", String(body.size));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/octet-stream"
+              },
+              {
+                "key": "X-Filename",
+                "value": "{{sample_upload_filename}}"
+              }
+            ],
+            "body": {
+              "mode": "file",
+              "file": {
+                "src": "{{sample_upload_file_path}}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/upload_file",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "upload_file"
+              ]
+            },
+            "description": "Upload any local file to the device as raw bytes. For IPA install, set sample_upload_file_path and sample_upload_filename, send this request, then pass uploaded_file_path to install_app. The response contains only path, filename, and size."
+          }
+        }
+      ]
+    },
+    {
+      "name": "App Management",
+      "item": [
+        {
+          "name": "launch_app",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"launch_app\",\n    \"arguments\": {\n      \"bundle_id\": \"{{sample_bundle_id}}\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Launch or foreground an app by bundle identifier."
+          }
+        },
+        {
+          "name": "kill_app",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"kill_app\",\n    \"arguments\": {\n      \"bundle_id\": \"{{sample_bundle_id}}\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Terminate an app by bundle identifier. Disruptive."
+          }
+        },
+        {
+          "name": "list_apps",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"list_apps\",\n    \"arguments\": {\n      \"type\": \"{{sample_list_type}}\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "List installed applications."
+          }
+        },
+        {
+          "name": "list_running_apps",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"list_running_apps\",\n    \"arguments\": {}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "List currently running applications."
+          }
+        },
+        {
+          "name": "get_frontmost_app",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"get_frontmost_app\",\n    \"arguments\": {}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Return the current foreground application."
+          }
+        },
+        {
+          "name": "install_app",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"install_app\",\n    \"arguments\": {\n      \"path\": \"{{uploaded_file_path}}\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Install an IPA already on the device. For a computer-local IPA, first send File Transfer / upload_file and then use the uploaded_file_path environment value here."
+          }
+        },
+        {
+          "name": "uninstall_app",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"uninstall_app\",\n    \"arguments\": {\n      \"bundle_id\": \"{{sample_bundle_id}}\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Uninstall an app by bundle identifier. Disruptive."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Accessibility",
+      "item": [
+        {
+          "name": "get_ui_elements",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"get_ui_elements\",\n    \"arguments\": {\n      \"max_depth\": {{sample_max_depth}},\n      \"max_elements\": {{sample_max_elements}}\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Return the frontmost app accessibility tree."
+          }
+        },
+        {
+          "name": "get_element_at_point",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"get_element_at_point\",\n    \"arguments\": {\n      \"x\": {{sample_x}},\n      \"y\": {{sample_y}}\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Return the accessibility element at a specific point."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Text Input",
+      "item": [
+        {
+          "name": "input_text",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"input_text\",\n    \"arguments\": {\n      \"text\": \"{{sample_text}}\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Paste text into the focused input."
+          }
+        },
+        {
+          "name": "type_text",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"type_text\",\n    \"arguments\": {\n      \"text\": \"{{sample_text}}\",\n      \"delay_ms\": {{sample_delay_ms}}\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Type ASCII text character by character. Chinese, emoji, and unsupported characters use pasteboard fallback."
+          }
+        },
+        {
+          "name": "press_key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"press_key\",\n    \"arguments\": {\n      \"key\": \"{{sample_key}}\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Press a special keyboard key."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Advanced",
+      "item": [
+        {
+          "name": "long_press",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"long_press\",\n    \"arguments\": {\n      \"x\": {{sample_x}},\n      \"y\": {{sample_y}},\n      \"duration\": {{sample_long_press_duration_ms}}\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Long press at a point using the HID event path."
+          }
+        },
+        {
+          "name": "double_tap",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"double_tap\",\n    \"arguments\": {\n      \"x\": {{sample_x}},\n      \"y\": {{sample_y}},\n      \"interval\": {{sample_interval_ms}}\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Double tap at a point using the HID event path."
+          }
+        },
+        {
+          "name": "drag_and_drop",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"drag_and_drop\",\n    \"arguments\": {\n      \"fromX\": {{sample_x}},\n      \"fromY\": {{sample_y}},\n      \"toX\": {{sample_to_x}},\n      \"toY\": {{sample_to_y}},\n      \"hold_duration\": {{sample_long_press_duration_ms}},\n      \"move_duration\": {{sample_swipe_duration_ms}},\n      \"steps\": {{sample_steps}}\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Drag from one point to another using the HID event path."
+          }
+        },
+        {
+          "name": "open_url",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"open_url\",\n    \"arguments\": {\n      \"url\": \"{{sample_url}}\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Open a URL or deep link."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Device Control",
+      "item": [
+        {
+          "name": "get_brightness",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"get_brightness\",\n    \"arguments\": {}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Read the current screen brightness level."
+          }
+        },
+        {
+          "name": "set_brightness",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"set_brightness\",\n    \"arguments\": {\n      \"level\": {{sample_brightness_level}}\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Set the screen brightness level."
+          }
+        },
+        {
+          "name": "get_volume",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"get_volume\",\n    \"arguments\": {}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Read the current media volume level."
+          }
+        },
+        {
+          "name": "set_volume",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"set_volume\",\n    \"arguments\": {\n      \"level\": {{sample_volume_level}}\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Set the current media volume level."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Device Info & Shell",
+      "item": [
+        {
+          "name": "get_device_info",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"get_device_info\",\n    \"arguments\": {}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Read device model, iOS version, battery, storage, memory, and uptime."
+          }
+        },
+        {
+          "name": "run_command",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{current_request_id}}\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"run_command\",\n    \"arguments\": {\n      \"command\": \"{{sample_command}}\",\n      \"timeout\": {{sample_timeout_sec}}\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mcp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mcp"
+              ]
+            },
+            "description": "Execute a non-interactive shell command in the jailbreak environment."
+          }
+        }
+      ]
+    }
+  ]
+}

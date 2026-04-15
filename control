@@ -1,0 +1,12 @@
+Package: com.witchan.ios-mcp
+Name: iOS MCP
+Provides: com.witchan.iphone-mcp
+Conflicts: com.witchan.iphone-mcp
+Replaces: com.witchan.iphone-mcp
+Depends: mobilesubstrate, preferenceloader
+Version: 1.0.0
+Architecture: iphoneos-arm
+Description: MCP server for AI-driven iOS device control. Supports HID buttons, touch, screenshots, clipboard, app management, accessibility tree, and text input.
+Maintainer: witchan
+Author: witchan
+Section: Tweaks

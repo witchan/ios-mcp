@@ -1,0 +1,290 @@
+name: CI
+
+on:
+  push:
+    paths:
+      - '*.c'
+      - '*.cpp'
+      - 'Makefile'
+      - '.github/workflows/*'
+  pull_request:
+    paths:
+      - '*.c'
+      - '*.cpp'
+      - 'Makefile'
+      - '.github/workflows/*'
+  workflow_dispatch:
+  release:
+    types:
+      - created
+
+env:
+  LIBPLIST_VERSION: 2.3.0
+  OPENSSL_VERSION: 3.3.1
+  SCCACHE_VERSION: 0.8.1
+  TRE_COMMIT: 98fd7804256763da06c6c8b13a7918eb7611bf4b
+  MMAN_COMMIT: 2d1c576e62b99e85d99407e1a88794c6e44c3310
+
+jobs:
+  build-linux:
+    name: Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        triple:
+        - aarch64-linux-musl
+        - x86_64-linux-musl
+        - x86_64-w64-mingw32
+    env:
+      TOOLCHAIN: ${{ matrix.triple }}-cross
+      TRIPLE: ${{ matrix.triple }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore or cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/sccache
+            ~/dep_src
+          key: build-linux-${{ matrix.triple }}-${{ github.sha }}
+          restore-keys: |
+            build-linux-${{ matrix.triple }}-
+
+      - name: Setup environment
+        run: |
+          export DOWNLOAD_PATH=${HOME}/dep_src
+          export DEP_PATH=${HOME}/build
+          mkdir -p ${DOWNLOAD_PATH} ${DEP_PATH}
+          echo "DOWNLOAD_PATH=${DOWNLOAD_PATH}" >> $GITHUB_ENV
+          echo "DEP_PATH=${DEP_PATH}" >> $GITHUB_ENV
+          echo "ARCH=$(echo ${{ matrix.triple }} | cut -d- -f 1)" >> $GITHUB_ENV
+          echo "OS=$(echo ${{ matrix.triple }} | cut -d- -f 2)" >> $GITHUB_ENV
+          if [ "$(echo ${{ matrix.triple }} | cut -d- -f 2)" = "w64" ]; then
+            echo "EXT=.exe" >> $GITHUB_ENV
+          else
+            echo "EXT=" >> $GITHUB_ENV
+          fi
+
+      - name: Setup toolchain
+        run: |
+          wget -nc -P ${DOWNLOAD_PATH} https://cameronkatri.com/toolchains/${TOOLCHAIN}.tgz
+          wget -nc -P ${DOWNLOAD_PATH} https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VERSION}/sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl.tar.gz
+          tar xf ${DOWNLOAD_PATH}/${TOOLCHAIN}.tgz -C ${HOME}
+          tar xf ${DOWNLOAD_PATH}/sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl.tar.gz -C ${HOME}
+          mv ${HOME}/sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl/sccache ${HOME}/${TOOLCHAIN}/bin
+          chmod +x ${HOME}/${TOOLCHAIN}/bin/sccache
+
+          echo "${HOME}/${TOOLCHAIN}/bin" >> $GITHUB_PATH
+          echo "CC=sccache ${TRIPLE}-gcc" >> $GITHUB_ENV
+          echo "CXX=sccache ${TRIPLE}-g++" >> $GITHUB_ENV
+          echo "AR=${TRIPLE}-gcc-ar" >> $GITHUB_ENV
+          echo "NM=${TRIPLE}-gcc-nm" >> $GITHUB_ENV
+          echo "RANLIB=${TRIPLE}-gcc-ranlib" >> $GITHUB_ENV
+          if [ "${OS}" = "w64" ]; then
+            echo "CFLAGS=-Os -fPIC -fno-pie -no-pie -static -ffunction-sections -fdata-sections" >> $GITHUB_ENV
+            echo "CXXFLAGS=-Os -fPIC -fno-pie -no-pie -static -ffunction-sections -fdata-sections" >> $GITHUB_ENV
+            echo "LDFLAGS=-Os -fPIC -fno-pie -no-pie -static -Wl,--gc-sections -Wl,-strip-all -ffunction-sections -fdata-sections" >> $GITHUB_ENV
+          else
+            echo "CFLAGS=-Os -fPIC -fno-pie -no-pie -static -ffunction-sections -flto -fdata-sections" >> $GITHUB_ENV
+            echo "CXXFLAGS=-Os -fPIC -fno-pie -no-pie -static -ffunction-sections -flto -fdata-sections" >> $GITHUB_ENV
+            echo "LDFLAGS=-Os -fPIC -fno-pie -no-pie -static -Wl,--gc-sections -Wl,-strip-all -flto -ffunction-sections -fdata-sections" >> $GITHUB_ENV
+          fi
+
+      - name: Build libplist
+        run: |
+          wget -nc -P ${DOWNLOAD_PATH} https://github.com/libimobiledevice/libplist/releases/download/${LIBPLIST_VERSION}/libplist-${LIBPLIST_VERSION}.tar.bz2
+          tar xf ${DOWNLOAD_PATH}/libplist-${LIBPLIST_VERSION}.tar.bz2 -C ${DEP_PATH}
+          cd ${DEP_PATH}/libplist-${LIBPLIST_VERSION}
+          ./configure --host=${TRIPLE} --prefix=/usr --without-cython --enable-static --disable-shared
+          make -j$(nproc)
+
+          echo "LIBPLIST_INCLUDES=-I${DEP_PATH}/libplist-${LIBPLIST_VERSION}/include" >> $GITHUB_ENV
+          echo "LIBPLIST_LIBS=${DEP_PATH}/libplist-${LIBPLIST_VERSION}/src/.libs/libplist-2.0.a" >> $GITHUB_ENV
+
+      - name: Build OpenSSL
+        run: |
+          if [ "${OS}" = "w64" ]; then
+            export PLATFORM="mingw64"
+          else
+            export PLATFORM="linux-${ARCH}"
+          fi
+
+          wget -nc -P ${DOWNLOAD_PATH} https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz
+          tar xf ${DOWNLOAD_PATH}/openssl-${OPENSSL_VERSION}.tar.gz -C ${DEP_PATH}
+          cd ${DEP_PATH}/openssl-${OPENSSL_VERSION}
+          ./config -static enable-fips enable-capieng no-module enable-ktls no-zlib \
+            no-async no-comp no-idea no-mdc2 no-rc5 no-ec2m no-sm2 no-sm4 no-ssl3 no-seed no-weak-ssl-ciphers ${PLATFORM}
+          make -j$(nproc) build_generated libcrypto.a
+
+          echo "LIBCRYPTO_INCLUDES=-I${DEP_PATH}/openssl-${OPENSSL_VERSION}/include" >> $GITHUB_ENV
+          if [ "${OS}" = "w64" ]; then
+            echo "LIBCRYPTO_LIBS=${DEP_PATH}/openssl-${OPENSSL_VERSION}/libcrypto.a -lws2_32 -lgdi32 -ladvapi32 -lcrypt32 -luser32" >> $GITHUB_ENV
+          else
+            echo "LIBCRYPTO_LIBS=${DEP_PATH}/openssl-${OPENSSL_VERSION}/libcrypto.a" >> $GITHUB_ENV
+          fi
+
+      - name: Build mman-win32
+        if: ${{ env.OS == 'w64' }}
+        run: |
+          wget -nc -O ${DOWNLOAD_PATH}/mman-win32-${MMAN_COMMIT}.tar.gz https://github.com/alitrack/mman-win32/archive/${MMAN_COMMIT}.tar.gz || true
+          tar xf ${DOWNLOAD_PATH}/mman-win32-${MMAN_COMMIT}.tar.gz -C ${DEP_PATH}
+          cd ${DEP_PATH}/mman-win32-${MMAN_COMMIT}
+          ./configure --prefix=/ --disable-shared --enable-static --cross-prefix="${TRIPLE}-"
+          make -j$(nproc)
+          mkdir -p include/sys/
+          ln -s ../../mman.h include/sys/
+
+          echo "CXXFLAGS=${CXXFLAGS} -I${DEP_PATH}/mman-win32-${MMAN_COMMIT}/include" >> $GITHUB_ENV
+          echo "LIBS=${LIBS} ${DEP_PATH}/mman-win32-${MMAN_COMMIT}/libmman.a" >> $GITHUB_ENV
+
+      - name: Build tre
+        if: ${{ env.OS == 'w64' }}
+        run: |
+          sudo apt-get install -y autopoint
+          wget -nc -O ${DOWNLOAD_PATH}/tre-${TRE_COMMIT}.tar.gz https://github.com/laurikari/tre/archive/${TRE_COMMIT}.tar.gz || true
+          tar xf ${DOWNLOAD_PATH}/tre-${TRE_COMMIT}.tar.gz -C ${DEP_PATH}
+          cd ${DEP_PATH}/tre-${TRE_COMMIT}
+          ./utils/autogen.sh
+          ./configure --host=${TRIPLE} --prefix=/usr --without-cython --enable-static --disable-shared
+          make -j$(nproc)
+
+          echo "CXXFLAGS=${CXXFLAGS} -DUSE_LOCAL_TRE_H -I${DEP_PATH}/tre-${TRE_COMMIT}/local_includes" >> $GITHUB_ENV
+          echo "LIBS=${LIBS} ${DEP_PATH}/tre-${TRE_COMMIT}/lib/.libs/libtre.a" >> $GITHUB_ENV
+
+      - name: Build
+        run: |
+          make -j$(nproc) \
+            CXXFLAGS="-Wextra ${CXXFLAGS}" \
+            LDFLAGS="-static -static-libstdc++ ${LDFLAGS}" \
+            EXT="${EXT}"
+          ${TRIPLE}-strip ldid${EXT}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        with:
+          name: ldid_${{ env.OS }}_${{ env.ARCH }}${{ env.EXT }}
+          path: ldid${{ env.EXT }}
+
+      - name: Upload release asset
+        uses: svenstaro/upload-release-action@v2
+        if: ${{ github.event_name == 'release' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          file: ldid${{ env.EXT }}
+          asset_name: ldid_${{ env.OS }}_${{ env.ARCH }}${{ env.EXT }}
+
+  build-macos:
+    name: Build
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            os: macosx
+          - arch: arm64
+            os: macosx
+          - arch: arm64
+            os: iphoneos
+    env:
+      ARCH: ${{ matrix.arch }}
+      OS: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore or cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/Mozilla.sccache
+            ~/dep_src
+          key: build-${{ matrix.os }}-${{ matrix.arch }}-${{ github.sha }}
+          restore-keys: |
+            build-${{ matrix.os }}-${{ matrix.arch }}-
+
+      - name: Setup environment
+        run: |
+          export DOWNLOAD_PATH=${HOME}/dep_src
+          export DEP_PATH=${HOME}/build
+          mkdir -p ${DOWNLOAD_PATH} ${DEP_PATH}
+          echo "DOWNLOAD_PATH=${DOWNLOAD_PATH}" >> $GITHUB_ENV
+          echo "DEP_PATH=${DEP_PATH}" >> $GITHUB_ENV
+
+          if [ "${ARCH}" = "arm64" ]; then
+            echo "HOST_ARCH=aarch64" >> $GITHUB_ENV
+          else
+            echo "HOST_ARCH=${ARCH}" >> $GITHUB_ENV
+          fi
+          echo "SDK=$(xcrun -sdk ${OS} --show-sdk-path)" >> $GITHUB_ENV
+
+      - name: Setup toolchain
+        run: |
+          brew install automake
+          wget -nc -P ${DOWNLOAD_PATH} https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VERSION}/sccache-v${SCCACHE_VERSION}-x86_64-apple-darwin.tar.gz
+          tar xf ${DOWNLOAD_PATH}/sccache-v${SCCACHE_VERSION}-x86_64-apple-darwin.tar.gz -C ${HOME}
+          chmod +x ${HOME}/sccache-v${SCCACHE_VERSION}-x86_64-apple-darwin/sccache
+
+          echo "${HOME}/sccache-v${SCCACHE_VERSION}-x86_64-apple-darwin" >> $GITHUB_PATH
+          CC="sccache clang -arch ${ARCH} -isysroot ${SDK}"
+          CXX="sccache clang++ -arch ${ARCH} -isysroot ${SDK}"
+          if [ "${OS}" = "macosx" ]; then
+            echo "CC=${CC} -mmacosx-version-min=10.13" >> $GITHUB_ENV
+            echo "CXX=${CXX} -mmacosx-version-min=10.13" >> $GITHUB_ENV
+          else
+            echo "CC=${CC} -miphoneos-version-min=10.0" >> $GITHUB_ENV
+            echo "CXX=${CXX} -miphoneos-version-min=10.0" >> $GITHUB_ENV
+          fi
+          echo "CXXFLAGS=-Os" >> $GITHUB_ENV
+          echo "CFLAGS=-Os" >> $GITHUB_ENV
+
+      - name: Build libplist
+        run: |
+          wget -nc -P ${DOWNLOAD_PATH} https://github.com/libimobiledevice/libplist/releases/download/${LIBPLIST_VERSION}/libplist-${LIBPLIST_VERSION}.tar.bz2
+          tar xf ${DOWNLOAD_PATH}/libplist-${LIBPLIST_VERSION}.tar.bz2 -C ${DEP_PATH}
+          cd ${DEP_PATH}/libplist-${LIBPLIST_VERSION}
+          ./configure --host=${HOST_ARCH}-apple-darwin --without-cython --enable-static --disable-shared
+          make -j$(sysctl -n hw.ncpu)
+
+          echo "LIBPLIST_INCLUDES=-I${DEP_PATH}/libplist-${LIBPLIST_VERSION}/include" >> $GITHUB_ENV
+          echo "LIBPLIST_LIBS=${DEP_PATH}/libplist-${LIBPLIST_VERSION}/src/.libs/libplist-2.0.a" >> $GITHUB_ENV
+
+      - name: Build OpenSSL
+        run: |
+          wget -nc -P ${DOWNLOAD_PATH} https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz
+          tar xf ${DOWNLOAD_PATH}/openssl-${OPENSSL_VERSION}.tar.gz -C ${DEP_PATH}
+          cd ${DEP_PATH}/openssl-${OPENSSL_VERSION}
+          ./config -static enable-fips enable-capieng no-module enable-ktls no-zlib \
+            no-async no-comp no-idea no-mdc2 no-rc5 no-ec2m no-sm2 no-sm4 no-ssl3 no-seed no-weak-ssl-ciphers darwin64-${ARCH}-cc
+          make -j$(sysctl -n hw.ncpu) build_generated libcrypto.a
+
+          echo "LIBCRYPTO_INCLUDES=${CXXFLAGS} -I${DEP_PATH}/openssl-${OPENSSL_VERSION}/include" >> $GITHUB_ENV
+          echo "LIBCRYPTO_LIBS=${DEP_PATH}/openssl-${OPENSSL_VERSION}/libcrypto.a" >> $GITHUB_ENV
+
+      - name: Build
+        run: |
+          make -j$(sysctl -n hw.ncpu) \
+            CXXFLAGS="-flto=thin -Wextra ${CXXFLAGS}" \
+            LDFLAGS="-flto=thin"
+          strip ldid
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        with:
+          name: ldid_${{ matrix.os }}_${{ matrix.arch }}
+          path: ldid
+
+      - name: Upload release asset
+        uses: svenstaro/upload-release-action@v2
+        if: ${{ github.event_name == 'release' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          file: ldid
+          asset_name: ldid_${{ matrix.os }}_${{ matrix.arch }}

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>id</key>
+			<string>serviceControlGroup</string>
+			<key>label</key>
+			<string>服务控制</string>
+			<key>footerText</key>
+			<string>当前状态：检测中...</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>toggleServer:</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>enabled</key>
+			<false/>
+			<key>id</key>
+			<string>toggleServerButton</string>
+			<key>label</key>
+			<string>检测中...</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>id</key>
+			<string>codexPromptGroup</string>
+			<key>label</key>
+			<string>MCP 提示词片段</string>
+			<key>footerText</key>
+			<string>正在获取当前局域网地址...</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>copyPrompt:</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>复制 MCP 提示词片段</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>公众号</string>
+			<key>footerText</key>
+			<string>查看我的信息、联系方式和公众号二维码，或者直接扫码关注。</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>openAuthorPage:</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>关于作者</string>
+		</dict>
+		<dict>
+			<key>caption</key>
+			<string>微信扫码关注公众号</string>
+			<key>cell</key>
+			<string>PSStaticTextCell</string>
+			<key>cellClass</key>
+			<string>IOSMCPQRCodeCell</string>
+			<key>enabled</key>
+			<false/>
+			<key>height</key>
+			<integer>390</integer>
+			<key>qrImageName</key>
+			<string>wechat_qr.jpg</string>
+		</dict>
+	</array>
+	<key>title</key>
+	<string>iOS MCP</string>
+</dict>
+</plist>

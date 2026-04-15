@@ -1,0 +1,9 @@
+{
+	Filter = {
+		Executables = (
+			"SpringBoard",
+			"backboardd",
+			"runningboardd"
+		);
+	};
+}

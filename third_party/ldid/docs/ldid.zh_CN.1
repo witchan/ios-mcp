@@ -1,0 +1,218 @@
+.\"-
+.\" Copyright (c) 2021-2022 Procursus Team <team@procurs.us>
+.\" SPDX-License-Identifier: AGPL-3.0-or-later
+.\"
+.Dd January 20, 2022
+.Dt LDID 1
+.Os
+.Sh 名称
+.Nm ldid
+.Nd 链接身份编辑器
+.Sh 语法
+.Nm
+.Op Fl A Ns Ar 处理器类型 : Ns Ar 亚类型
+.Op Fl a
+.Op Fl C Ns Op Ar adhoc | Ar enforcement | Ar expires | Ar hard | Ar host | Ar kill | Ar library-validation | Ar restrict | Ar runtime | Ar linker-signed
+.Op Fl D
+.Op Fl d
+.Op Fl E Ns Ar 数字 : Ns Ar 档案
+.Op Fl e
+.Op Fl H Ns Op Ar sha1 | Ar sha256
+.Op Fl h
+.Op Fl I Ns Ar 名称
+.Op Fl K Ns Ar 密钥.p12 Op Fl U Ns Ar 密码
+.Op Fl M
+.Op Fl P Ns Op Ar 数字
+.Op Fl Q Ns Ar 需求
+.Op Fl q
+.Op Fl r | Fl S Ns Ar 档案.xml | Fl s
+.Op Fl u
+.Op Fl arch Ar 架构类型
+.Ar 档案......
+.Sh 描述
+.Nm
+把SHA1和SHA256杂凑值加入到Mach-O档案中，
+让它们能在有验证但没有签署验证的系统上运行。
+.Bl -tag -width -indent
+.It Fl A Ns Ar 处理器类型 : Ns Ar 亚类型
+当和
+.Fl a
+、
+.Fl d
+、
+.Fl e
+、
+.Fl h
+、
+.Fl q
+或
+.Fl u
+一起被使用时，只作用在被
+.Ar 处理器类型
+和
+.Ar 亚类型
+指定的部分。
+.Ar 处理器类型
+和
+.Ar 亚类型
+都应该是整数。
+.It Fl a
+以十六进制印出处理器类型和亚类型。
+.It Fl arch Ar 架构类型
+和
+.Fl A
+一样，不过使用架构的名称。
+已知的
+.Ar 架构类型 Ns
+可以在
+.Xr arch 3
+中找到。
+这是一个Procursus扩展。
+.It Fl C Ns Op Ar adhoc | Ar enforcement | Ar expires | Ar hard | Ar host | Ar kill | Ar library-validation | Ar restrict | Ar runtime
+设定要在档案中包含的程式码签署选项。
+请看
+.Xr codesign 1
+来获得关于这些选项的更多资讯。
+.It Fl D
+重设加密码 (cryptid)。
+.It Fl d
+输出在二进位档案中的加密码。
+.It Fl E Ns Ar 数字 : Ns Ar 档案
+将
+.Ar 档案
+的杂凑值嵌入到位于
+.Ar 数字
+的特殊代码签署位置中。
+.It Fl e
+把每一部分的权限印出，或印出
+.Fl A
+或
+.Fl arch
+所指定的部分的权限到
+.Ar 标准输出
+。
+.It Fl H Ns Op Ar sha1 | Ar sha256
+禁用没有指明的杂凑吗。
+这个选项可以用来重现
+.Xr codesign 1
+只提供sha256签署的预设行为。
+.It Fl h
+印出关于签署的资讯，包括杂凑值的
+类型，选项，CDHash, 和 CodeDirectory 版本到
+.Ar 标准输出
+。
+.It Fl I Ns Ar 名称
+把二进制档案签署中的识别码设定为
+.Ar 名称
+。
+如没有指明，就会使用二进位档案的档案名称。
+.It Fl K Ns Ar 密钥.p12
+使用位于
+.Ar 密钥.p12
+的身份签署。会给二进位档案有一个有效的签署，令它能够在有签署验证的系统上运行。
+如果
+.Ar 密钥.p12
+有密码的话，你会被询问。也可以用
+.Fl U
+选项来提供密码。
+.It Fl M
+当和
+.Fl S
+一起使用时，和现有的权限合并而不是取代它。在加入权限时有用。
+.It Fl P Ns Op Ar 数字
+将这个Mach-O二进位档案标示为平台二进位档案。
+如果提供了
+.Ar 数字
+，那么在CodeDirectory中的平台区域定会被设定为该数字。
+根据苹果的二进位档案，预设为13。
+使用
+.Fl P
+来设定平台是一个Procursus扩展。
+.It Fl Q Ns Ar 需求
+把需求嵌入到
+.Ar 需求
+中。
+.It Fl q
+印出被嵌入在二进位档案中的需求。
+.It Fl r
+从Mach-O档案中删除签署。
+.It Fl S Ns Op Ar 档案.xml
+伪签署Mach-O档案。
+如果提供了
+.Ar 档案.xml
+那么在
+.Ar 档案.xml
+中的权限会被嵌入到Mach-O中。
+.It Fl s
+重新签署Mach-O档案但保留现有权限。
+.It Fl U Ns Ar 密码
+使用
+.Ar 密码
+作为p12证书的密码，而不是询问。
+这是一个Procursus扩展。
+.It Fl u
+如果Mach-O档案有和UIKit链结，印出被链结的UIKit版本。
+.El
+.Sh 例子
+指令：
+.Pp
+.Dl "ldid -S 档案"
+.Pp
+会伪签署
+.Ar 档案
+而且不嵌入任何权限。
+.Pp
+指令：
+.Pp
+.Dl "ldid -Cadhoc -K/path/to/密钥.p12 -S权限.xml 档案"
+.Pp
+会使用
+.Ar /path/to/密钥.p12
+中的私錀来签署
+.Ar 档案
+也会使用在
+.Ar 权限.xml
+中的权限并把签署标示为特别用途 (adhoc) 签署。
+.Pp
+指令：
+.Pp
+.Dl "ldid -S -Cadhoc,linker-signed 档案"
+.Pp
+会伪签署
+.Ar 档案
+而且不嵌入任何权限, 同时会把签署标示为特别用途 (adhoc,linker-signed) 签署。
+.Pp
+指令：
+.Pp
+.Dl "ldid -S权限.xml -M 档案"
+.Pp
+会把
+.Ar 权限.xml
+中的权限加入到已经在
+.Ar 档案
+中的权限。
+.Pp
+指令：
+.Pp
+.Dl "ldid -e 档案 > 权限.xml"
+.Pp
+会把在
+.Ar 档案
+中每一部分的权限储存到
+.Ar 权限.xml
+。
+.Sh 另见
+.Xr codesign 1
+.Sh 历史
+这个
+.Nm
+工具程式是由
+.An Jay \*qSaurik\*q Freeman 所编写的。
+对iPhoneOS 1.2.0 和 2.0 的支援在2008年4月6号被加入。
+.Fl S
+在2008年6月13日被加入。
+SHA256 支援在2016年8月25日被加入，修正iOS 11支援。
+iOS 14支援在2020年7月31日由
+.An Kabir Oberai
+加入。
+iOS 15支援在2021年6月11日被加入。

@@ -1,0 +1,17 @@
+Package: ai.akemi.appinst
+Name: appinst (App Installer)
+Priority: standard
+Pre-Depends: firmware (>= 5.0)
+Depends: ai.akemi.appsyncunified (>= 5.1)
+Version: 2.1.1
+Architecture: iphoneos-arm
+Description: A command-line IPA app installer.
+Maintainer: Karen/あけみ <karen@akemi.ai>
+Author: Karen/あけみ, Linus Yang <karen@akemi.ai>
+Section: Utilities
+Homepage: https://github.com/akemin-dayo/AppSync
+Tag: role::enduser, purpose::console
+Conflicts: com.sull.appinstaller
+Provides: com.linusyang.appinst
+Replaces: com.linusyang.appinst
+Depiction: https://cydia.akemi.ai/?page/ai.akemi.appinst

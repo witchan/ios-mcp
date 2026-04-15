@@ -1,0 +1,167 @@
+[
+  {
+    "tool_name": "press_volume_up",
+    "tool_args_json": "{\"duration\":100}",
+    "notes": "State-changing"
+  },
+  {
+    "tool_name": "press_volume_down",
+    "tool_args_json": "{\"duration\":100}",
+    "notes": "State-changing"
+  },
+  {
+    "tool_name": "press_power",
+    "tool_args_json": "{\"duration\":100}",
+    "notes": "May lock the screen"
+  },
+  {
+    "tool_name": "press_home",
+    "tool_args_json": "{\"duration\":100}",
+    "notes": "May change foreground app"
+  },
+  {
+    "tool_name": "toggle_mute",
+    "tool_args_json": "{\"duration\":100}",
+    "notes": "State-changing"
+  },
+  {
+    "tool_name": "tap_screen",
+    "tool_args_json": "{\"x\":100,\"y\":100}",
+    "notes": "State-changing"
+  },
+  {
+    "tool_name": "swipe_screen",
+    "tool_args_json": "{\"fromX\":100,\"fromY\":500,\"toX\":100,\"toY\":200,\"duration\":300,\"steps\":20}",
+    "notes": "State-changing"
+  },
+  {
+    "tool_name": "get_screen_info",
+    "tool_args_json": "{}",
+    "notes": "Read-only"
+  },
+  {
+    "tool_name": "screenshot",
+    "tool_args_json": "{}",
+    "notes": "Read-only"
+  },
+  {
+    "tool_name": "get_clipboard",
+    "tool_args_json": "{}",
+    "notes": "Read-only"
+  },
+  {
+    "tool_name": "set_clipboard",
+    "tool_args_json": "{\"text\":\"hello from postman\"}",
+    "notes": "State-changing"
+  },
+  {
+    "tool_name": "launch_app",
+    "tool_args_json": "{\"bundle_id\":\"com.apple.Preferences\"}",
+    "notes": "State-changing"
+  },
+  {
+    "tool_name": "kill_app",
+    "tool_args_json": "{\"bundle_id\":\"com.apple.Preferences\"}",
+    "notes": "State-changing"
+  },
+  {
+    "tool_name": "list_apps",
+    "tool_args_json": "{\"type\":\"user\"}",
+    "notes": "Read-only"
+  },
+  {
+    "tool_name": "list_running_apps",
+    "tool_args_json": "{}",
+    "notes": "Read-only"
+  },
+  {
+    "tool_name": "get_frontmost_app",
+    "tool_args_json": "{}",
+    "notes": "Read-only"
+  },
+  {
+    "tool_name": "get_ui_elements",
+    "tool_args_json": "{\"max_depth\":12,\"max_elements\":400}",
+    "notes": "Read-only"
+  },
+  {
+    "tool_name": "get_element_at_point",
+    "tool_args_json": "{\"x\":100,\"y\":100}",
+    "notes": "Read-only"
+  },
+  {
+    "tool_name": "input_text",
+    "tool_args_json": "{\"text\":\"hello from postman\"}",
+    "notes": "Needs focused text field"
+  },
+  {
+    "tool_name": "type_text",
+    "tool_args_json": "{\"text\":\"hello\",\"delay_ms\":50}",
+    "notes": "Needs focused text field"
+  },
+  {
+    "tool_name": "press_key",
+    "tool_args_json": "{\"key\":\"enter\"}",
+    "notes": "State-changing"
+  },
+  {
+    "tool_name": "long_press",
+    "tool_args_json": "{\"x\":100,\"y\":100,\"duration\":500}",
+    "notes": "State-changing HID gesture"
+  },
+  {
+    "tool_name": "double_tap",
+    "tool_args_json": "{\"x\":100,\"y\":100,\"interval\":100}",
+    "notes": "State-changing HID gesture"
+  },
+  {
+    "tool_name": "drag_and_drop",
+    "tool_args_json": "{\"fromX\":100,\"fromY\":300,\"toX\":200,\"toY\":300,\"hold_duration\":500,\"move_duration\":300,\"steps\":20}",
+    "notes": "State-changing HID gesture"
+  },
+  {
+    "tool_name": "open_url",
+    "tool_args_json": "{\"url\":\"prefs:root=WIFI\"}",
+    "notes": "State-changing"
+  },
+  {
+    "tool_name": "get_device_info",
+    "tool_args_json": "{}",
+    "notes": "Read-only"
+  },
+  {
+    "tool_name": "run_command",
+    "tool_args_json": "{\"command\":\"uname -a\",\"timeout\":10}",
+    "notes": "Runs a non-interactive shell command"
+  },
+  {
+    "tool_name": "get_brightness",
+    "tool_args_json": "{}",
+    "notes": "Read-only"
+  },
+  {
+    "tool_name": "set_brightness",
+    "tool_args_json": "{\"level\":0.5}",
+    "notes": "State-changing"
+  },
+  {
+    "tool_name": "get_volume",
+    "tool_args_json": "{}",
+    "notes": "Read-only"
+  },
+  {
+    "tool_name": "set_volume",
+    "tool_args_json": "{\"level\":0.5}",
+    "notes": "State-changing"
+  },
+  {
+    "tool_name": "install_app",
+    "tool_args_json": "{\"path\":\"/tmp/app.ipa\"}",
+    "notes": "Requires an IPA on the device; use /upload_file first for computer-local files"
+  },
+  {
+    "tool_name": "uninstall_app",
+    "tool_args_json": "{\"bundle_id\":\"com.apple.Preferences\"}",
+    "notes": "Disruptive"
+  }
+]
