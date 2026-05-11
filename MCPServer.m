@@ -23,7 +23,7 @@
 
 #define MCP_PROTOCOL_VERSION @"2025-03-26"
 #define MCP_SERVER_NAME      @"ios-mcp"
-#define MCP_SERVER_VERSION   @"1.0.2"
+#define MCP_SERVER_VERSION   @"1.1.0"
 #define HTTP_BUF_SIZE        (256 * 1024)
 #define MCP_UPLOAD_DIR       @"/tmp/ios-mcp-uploads"
 #define MCP_MAX_UPLOAD_BYTES (500LL * 1024LL * 1024LL)
@@ -173,6 +173,123 @@ static BOOL MCPRectValuesFromDictionary(NSDictionary *rect, double *outX, double
     return YES;
 }
 
+static BOOL MCPDirectoryExists(NSString *path) {
+    if (path.length == 0) return NO;
+    BOOL isDirectory = NO;
+    return [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory] && isDirectory;
+}
+
+static NSDictionary *MCPHelperExecutableStatus(NSString *logicalPath) {
+    NSString *resolvedPath = MCPResolvedJailbreakPath(logicalPath);
+    BOOL executable = resolvedPath.length > 0 && [[NSFileManager defaultManager] isExecutableFileAtPath:resolvedPath];
+    return @{
+        @"path": resolvedPath ?: @"",
+        @"executable": @(executable)
+    };
+}
+
+static NSDictionary *MCPJailbreakInfo(BOOL debug) {
+    NSString *packageScheme = nil;
+    NSString *packageArchitecture = nil;
+#ifdef MCP_ROOTHIDE
+    packageScheme = @"roothide";
+    packageArchitecture = @"iphoneos-arm64e";
+#elif defined(MCP_ROOTLESS)
+    packageScheme = @"rootless";
+    packageArchitecture = @"iphoneos-arm64";
+#else
+    packageScheme = @"rootful";
+    packageArchitecture = @"iphoneos-arm";
+#endif
+
+    NSString *type = packageScheme;
+    NSString *rootPath = @"/";
+    if ([packageScheme isEqualToString:@"roothide"]) {
+        NSString *candidate = MCPResolvedJailbreakPath(@"/");
+        rootPath = candidate.length > 0 ? candidate : @"/var/jb";
+    } else if ([packageScheme isEqualToString:@"rootless"] || MCPDirectoryExists(@"/var/jb")) {
+        if (![packageScheme isEqualToString:@"roothide"]) {
+            type = @"rootless";
+        }
+        rootPath = @"/var/jb";
+    }
+
+    NSMutableDictionary *info = [@{
+        @"type": type ?: @"unknown",
+        @"packageScheme": packageScheme ?: @"unknown",
+        @"packageArchitecture": packageArchitecture ?: @"unknown",
+        @"rootPath": rootPath ?: @""
+    } mutableCopy];
+
+    if (debug) {
+        info[@"helpers"] = @{
+            @"mcpRoot": MCPHelperExecutableStatus(@"/usr/bin/mcp-root"),
+            @"mcpRootHelper": MCPHelperExecutableStatus(@"/usr/bin/mcp-roothelper"),
+            @"mcpAppInst": MCPHelperExecutableStatus(@"/usr/bin/mcp-appinst"),
+            @"mcpLdid": MCPHelperExecutableStatus(@"/usr/bin/mcp-ldid")
+        };
+    }
+
+    return [info copy];
+}
+
+static NSArray<NSString *> *MCPLockGuardAllowedTools(void) {
+    static NSArray<NSString *> *tools = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        tools = @[
+            @"press_power",
+            @"press_home",
+            @"wake_and_home",
+            @"get_screen_info",
+            @"screenshot",
+            @"get_frontmost_app",
+            @"get_ui_elements",
+            @"get_element_at_point",
+            @"list_apps",
+            @"list_running_apps",
+            @"get_device_info",
+            @"get_clipboard",
+            @"get_brightness",
+            @"get_volume"
+        ];
+    });
+    return tools;
+}
+
+static BOOL MCPLockGuardToolAllowed(NSString *toolName) {
+    if (toolName.length == 0) return NO;
+    return [MCPLockGuardAllowedTools() containsObject:toolName];
+}
+
+static BOOL MCPStateBool(NSDictionary *state, NSString *key, BOOL *outValue) {
+    id value = [state isKindOfClass:[NSDictionary class]] ? state[key] : nil;
+    if (!value || value == [NSNull null] || ![value respondsToSelector:@selector(boolValue)]) {
+        return NO;
+    }
+    if (outValue) *outValue = [value boolValue];
+    return YES;
+}
+
+static BOOL MCPDeviceStateRequiresWakeOrUnlock(NSDictionary *state) {
+    BOOL locked = NO;
+    if (MCPStateBool(state, @"locked", &locked) && locked) {
+        return YES;
+    }
+
+    BOOL lockScreenVisible = NO;
+    if (MCPStateBool(state, @"lock_screen_visible", &lockScreenVisible) && lockScreenVisible) {
+        return YES;
+    }
+
+    BOOL screenOn = YES;
+    if (MCPStateBool(state, @"screen_on", &screenOn) && !screenOn) {
+        return YES;
+    }
+
+    return NO;
+}
+
 static double MCPRandomUnit(void) {
     return ((double)arc4random_uniform(1000000) / 1000000.0);
 }
@@ -247,7 +364,10 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
 - (NSDictionary *)handleInitialize:(id)reqId;
 - (NSDictionary *)handleToolsList:(id)reqId;
 - (NSDictionary *)handleToolsCall:(id)reqId params:(NSDictionary *)params;
+- (NSDictionary *)lockedScreenGuardResponseForTool:(NSString *)toolName reqId:(id)reqId;
 - (NSDictionary *)executeButtonPress:(id)reqId button:(HIDButtonType)button args:(NSDictionary *)args label:(NSString *)label;
+- (BOOL)pressButtonSynchronously:(HIDButtonType)button duration:(NSTimeInterval)duration timeout:(NSTimeInterval)timeout error:(NSString **)error;
+- (NSDictionary *)executeWakeAndHome:(id)reqId args:(NSDictionary *)args;
 - (NSDictionary *)executeTap:(id)reqId args:(NSDictionary *)args;
 - (NSDictionary *)executeSwipe:(id)reqId args:(NSDictionary *)args;
 - (NSDictionary *)executeScreenInfo:(id)reqId;
@@ -268,7 +388,7 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
 - (NSDictionary *)executeDoubleTap:(id)reqId args:(NSDictionary *)args;
 - (NSDictionary *)executeDragAndDrop:(id)reqId args:(NSDictionary *)args;
 - (NSDictionary *)executeOpenURL:(id)reqId args:(NSDictionary *)args;
-- (NSDictionary *)executeGetDeviceInfo:(id)reqId;
+- (NSDictionary *)executeGetDeviceInfo:(id)reqId args:(NSDictionary *)args;
 - (NSDictionary *)executeRunCommand:(id)reqId args:(NSDictionary *)args;
 - (NSDictionary *)executeGetBrightness:(id)reqId;
 - (NSDictionary *)executeSetBrightness:(id)reqId args:(NSDictionary *)args;
@@ -295,6 +415,7 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
 @implementation MCPServer {
     int _serverSocket;
     dispatch_source_t _acceptSource;
+    dispatch_queue_t _clientQueue;
     NSString *_sessionId;
 }
 
@@ -311,6 +432,7 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
     self = [super init];
     if (self) {
         _serverSocket = -1;
+        _clientQueue = dispatch_queue_create("com.witchan.ios-mcp.client", DISPATCH_QUEUE_CONCURRENT);
         _sessionId = [[NSUUID UUID] UUIDString];
     }
     return self;
@@ -361,7 +483,9 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
         if (!self) return;
         int client = accept(sock, NULL, NULL);
         if (client >= 0) {
-            [self handleClient:client];
+            dispatch_async(self->_clientQueue, ^{
+                [self handleClient:client];
+            });
         }
     });
 
@@ -717,7 +841,7 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
                 @"name": MCP_SERVER_NAME,
                 @"version": MCP_SERVER_VERSION
             },
-            @"instructions": @"Use ios-mcp to inspect and operate the connected iPhone.\n\nGetting started: call get_frontmost_app, get_screen_info, get_ui_elements, and screenshot to understand the current device state.\n\nTouch and gestures: use screen point coordinates for tap_screen, swipe_screen, long_press, double_tap, and drag_and_drop. For Flutter or custom-rendered apps, accessibility may expose only a container such as FlutterView; use screenshot plus coordinates in that case.\n\nText input: use input_text for fast bulk text through system keyboard events, type_text for character-by-character text input, and press_key for special keys (enter, delete, tab, etc.).\n\nHardware buttons: press_home, press_power, press_volume_up, press_volume_down, toggle_mute.\n\nClipboard: get_clipboard and set_clipboard to read/write clipboard contents.\n\nScreenshot: the screenshot tool returns MCP image content, not text — result.content[0].data contains the base64 JPEG payload and result.content[0].mimeType is usually image/jpeg.\n\nApp management: launch_app, kill_app, list_apps, list_running_apps, get_frontmost_app. launch_app waits until the target app is actually frontmost before returning, so do not immediately re-issue redundant foreground checks unless you need to verify a later transition. To install an app from the computer, first upload raw IPA bytes to POST /upload_file (for example: curl -H 'X-Filename: app.ipa' --data-binary @app.ipa http://device-ip:8090/upload_file). The upload response returns a device path; pass that path to install_app. To install an IPA already on the phone, call install_app directly with its device path. Unsigned or fakesigned IPAs are supported. To uninstall: use list_apps to find the bundle_id, then call uninstall_app.\n\nDevice control: get_brightness/set_brightness, get_volume/set_volume, open_url (supports http/https and URL schemes like tel://, prefs:root=WIFI, etc.).\n\nDevice info: get_device_info for model, iOS version, battery, storage, and memory.\n\nShell: run_command to execute shell commands on the device (timeout default 10s, max 30s)."
+            @"instructions": @"Use ios-mcp to inspect and operate the connected iPhone.\n\nGetting started: call get_frontmost_app, get_screen_info, get_ui_elements, and screenshot to understand the current device state. get_screen_info includes device_state when SpringBoard exposes it. If locked is true, screen_on is false, the screenshot looks like the Lock Screen, or UI elements are from SpringBoard/Lock Screen, do not continue normal app automation until the device is awake/unlocked.\n\nLock screen handling: a single press_home only wakes or advances the Lock Screen and must not be treated as reaching the Home screen. Use wake_and_home when the device may be locked/off. The equivalent manual sequence is Power then Home when the screen is off, or Home twice when the Lock Screen is already visible. After wake_and_home, verify with screenshot/get_ui_elements/get_frontmost_app before continuing. The server enforces a lock guard: while locked or screen_off, interactive and mutating tools are blocked; only observation and recovery tools are allowed.\n\nTouch and gestures: use screen point coordinates for tap_screen, swipe_screen, long_press, double_tap, and drag_and_drop. For Flutter or custom-rendered apps, accessibility may expose only a container such as FlutterView; use screenshot plus coordinates in that case.\n\nText input: use input_text first for fast bulk text through system keyboard events. If input_text returns isError or reports failure/timeout, immediately retry the same text with type_text; do not repeat input_text. Use type_text for character-by-character input and press_key for special keys (enter, delete, tab, etc.).\n\nHardware buttons: press_home, press_power, press_volume_up, press_volume_down, toggle_mute, wake_and_home.\n\nClipboard: get_clipboard and set_clipboard to read/write clipboard contents.\n\nScreenshot: the screenshot tool returns MCP image content, not text — result.content[0].data contains the base64 JPEG payload and result.content[0].mimeType is usually image/jpeg.\n\nApp management: launch_app, kill_app, list_apps, list_running_apps, get_frontmost_app. launch_app waits until the target app is actually frontmost before returning, so do not immediately re-issue redundant foreground checks unless you need to verify a later transition. To install an app from the computer, first upload raw IPA bytes to POST /upload_file (for example: curl -H 'X-Filename: app.ipa' --data-binary @app.ipa http://device-ip:8090/upload_file). The upload response returns a device path; pass that path to install_app. To install an IPA already on the phone, call install_app directly with its device path. Unsigned or fakesigned IPAs are supported. To uninstall: use list_apps to find the bundle_id, then call uninstall_app.\n\nDevice control: get_brightness/set_brightness, get_volume/set_volume, open_url (supports http/https and URL schemes like tel://, prefs:root=WIFI, etc.).\n\nDevice info: get_device_info for model, iOS version, battery, storage, memory, and jailbreak type/package information. Pass debug=true only when diagnosing installation integrity to include bundled helper executable status.\n\nHealth checks: avoid shell brace expansion such as for i in {1..30}; ios-mcp commands often run under /bin/sh where that may execute only once. Use seq or a while loop, and use at least --connect-timeout 3 plus --max-time 5 for /health.\n\nShell: run_command to execute shell commands on the device (timeout default 10s, max 30s)."
         }
     };
 }
@@ -758,11 +882,23 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
         },
         @{
             @"name": @"press_home",
-            @"description": @"Press the home button",
+            @"description": @"Press the home button. On the Lock Screen, one Home press is not enough to assume the device reached the Home screen; use wake_and_home or verify with screenshot/get_ui_elements.",
             @"inputSchema": @{
                 @"type": @"object",
                 @"properties": @{
                     @"duration": @{@"type": @"number", @"description": @"Hold duration in milliseconds (default: 100)"}
+                }
+            }
+        },
+        @{
+            @"name": @"wake_and_home",
+            @"description": @"Wake a possibly locked/off device and try to reach the Home screen or unlock prompt using a realistic sequence. In auto mode, uses Power then Home if the screen appears off/unknown, or Home twice if the screen is already on. Always verify with screenshot/get_ui_elements after this tool.",
+            @"inputSchema": @{
+                @"type": @"object",
+                @"properties": @{
+                    @"sequence": @{@"type": @"string", @"description": @"auto, power_then_home, or home_twice (default: auto)"},
+                    @"duration": @{@"type": @"number", @"description": @"Button hold duration in milliseconds (default: 100)"},
+                    @"delay_ms": @{@"type": @"number", @"description": @"Delay between button presses in milliseconds (default: 300)"}
                 }
             }
         },
@@ -806,7 +942,7 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
         },
         @{
             @"name": @"get_screen_info",
-            @"description": @"Get current screen dimensions, scale factor, and orientation",
+            @"description": @"Get current screen dimensions, scale factor, orientation, and best-effort device_state including locked/screen_on when available",
             @"inputSchema": @{@"type": @"object", @"properties": @{}}
         },
         @{
@@ -915,7 +1051,7 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
         // ---- Text input tools ----
         @{
             @"name": @"input_text",
-            @"description": @"Input text into the focused text field through system keyboard events (fast, bulk input)",
+            @"description": @"Input text into the focused text field through system keyboard events (fast, bulk input). If this fails or times out, retry once with type_text using the same text.",
             @"inputSchema": @{
                 @"type": @"object",
                 @"properties": @{
@@ -926,7 +1062,7 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
         },
         @{
             @"name": @"type_text",
-            @"description": @"Type text through system keyboard text events, with HID fallback for ASCII keyboard characters",
+            @"description": @"Type text character-by-character through system keyboard text events, with HID fallback for ASCII keyboard characters. Use this as the fallback when input_text fails.",
             @"inputSchema": @{
                 @"type": @"object",
                 @"properties": @{
@@ -1006,8 +1142,13 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
         // ---- Device info tools ----
         @{
             @"name": @"get_device_info",
-            @"description": @"Get device information including model, iOS version, battery level, storage, and network status",
-            @"inputSchema": @{@"type": @"object", @"properties": @{}}
+            @"description": @"Get device information including model, iOS version, battery level, storage, memory, and jailbreak type/package information",
+            @"inputSchema": @{
+                @"type": @"object",
+                @"properties": @{
+                    @"debug": @{@"type": @"boolean", @"description": @"Include diagnostic helper executable status (default: false)"}
+                }
+            }
         },
         // ---- Shell command tools ----
         @{
@@ -1112,6 +1253,11 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
         return [self mcpError:reqId code:-32602 message:@"Missing tool name"];
     }
 
+    NSDictionary *lockGuardResponse = [self lockedScreenGuardResponseForTool:toolName reqId:reqId];
+    if (lockGuardResponse) {
+        return lockGuardResponse;
+    }
+
     // Button tools
     if ([toolName isEqualToString:@"press_volume_up"]) {
         return [self executeButtonPress:reqId button:HIDButtonVolumeUp args:args label:@"Volume Up"];
@@ -1121,6 +1267,8 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
         return [self executeButtonPress:reqId button:HIDButtonPower args:args label:@"Power"];
     } else if ([toolName isEqualToString:@"press_home"]) {
         return [self executeButtonPress:reqId button:HIDButtonHome args:args label:@"Home"];
+    } else if ([toolName isEqualToString:@"wake_and_home"]) {
+        return [self executeWakeAndHome:reqId args:args];
     } else if ([toolName isEqualToString:@"toggle_mute"]) {
         return [self executeButtonPress:reqId button:HIDButtonMute args:args label:@"Mute"];
     }
@@ -1182,7 +1330,7 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
     }
     // Device info tools
     else if ([toolName isEqualToString:@"get_device_info"]) {
-        return [self executeGetDeviceInfo:reqId];
+        return [self executeGetDeviceInfo:reqId args:args];
     }
     // Shell command tools
     else if ([toolName isEqualToString:@"run_command"]) {
@@ -1209,6 +1357,29 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
     return [self mcpError:reqId code:-32602 message:[NSString stringWithFormat:@"Unknown tool: %@", toolName]];
 }
 
+- (NSDictionary *)lockedScreenGuardResponseForTool:(NSString *)toolName reqId:(id)reqId {
+    if (MCPLockGuardToolAllowed(toolName)) {
+        return nil;
+    }
+
+    NSDictionary *state = [[ScreenManager sharedInstance] deviceInteractionState];
+    if (!MCPDeviceStateRequiresWakeOrUnlock(state)) {
+        return nil;
+    }
+
+    NSDictionary *payload = @{
+        @"blocked": @YES,
+        @"tool": toolName ?: @"",
+        @"reason": @"device_locked_or_screen_off",
+        @"device_state": state ?: @{},
+        @"allowed_tools": MCPLockGuardAllowedTools(),
+        @"next_step": @"Call wake_and_home first, then verify with screenshot/get_ui_elements/get_frontmost_app before retrying the blocked tool."
+    };
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:payload options:0 error:nil];
+    NSString *jsonStr = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+    return [self mcpSuccess:reqId text:jsonStr ?: @"Tool blocked while device is locked or screen is off" isError:YES];
+}
+
 #pragma mark - Tool Execution Helpers
 
 - (NSDictionary *)executeButtonPress:(id)reqId button:(HIDButtonType)button args:(NSDictionary *)args label:(NSString *)label {
@@ -1219,8 +1390,11 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
     }
     if (duration <= 0) duration = 100;
 
-    __block BOOL ok;
-    __block NSString *err;
+    BOOL isHomeButton = (button == HIDButtonHome);
+    NSDictionary *beforeState = isHomeButton ? [[ScreenManager sharedInstance] deviceInteractionState] : nil;
+
+    __block BOOL ok = NO;
+    __block NSString *err = nil;
     dispatch_semaphore_t sem = dispatch_semaphore_create(0);
 
     [[IOSMCPHIDManager sharedInstance] pressButton:button duration:duration completion:^(BOOL success, NSString *error) {
@@ -1231,9 +1405,129 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
     dispatch_semaphore_wait(sem, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
 
     if (ok) {
+        if (isHomeButton) {
+            usleep(250 * 1000);
+            NSDictionary *afterState = [[ScreenManager sharedInstance] deviceInteractionState];
+            id lockedValue = beforeState[@"locked"];
+            id screenOnValue = beforeState[@"screen_on"];
+            BOOL wasLocked = [lockedValue respondsToSelector:@selector(boolValue)] && [lockedValue boolValue];
+            BOOL wasScreenOff = [screenOnValue respondsToSelector:@selector(boolValue)] && ![screenOnValue boolValue];
+
+            if (wasLocked || wasScreenOff) {
+                NSDictionary *result = @{
+                    @"button": @"home",
+                    @"duration_ms": @(duration),
+                    @"before_state": beforeState ?: @{},
+                    @"after_state": afterState ?: @{},
+                    @"verify_required": @YES,
+                    @"recommended_tool": @"wake_and_home",
+                    @"warning": @"The device was locked or the screen was off before this Home press. Do not assume this reached the Home screen; call wake_and_home or verify with screenshot/get_ui_elements/get_frontmost_app."
+                };
+                NSData *jsonData = [NSJSONSerialization dataWithJSONObject:result options:0 error:nil];
+                NSString *jsonStr = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+                return [self mcpSuccess:reqId text:jsonStr];
+            }
+        }
         return [self mcpSuccess:reqId text:[NSString stringWithFormat:@"%@ button pressed (%.0fms)", label, duration]];
     }
     return [self mcpSuccess:reqId text:[NSString stringWithFormat:@"Failed to press %@: %@", label, err ?: @"timeout"] isError:YES];
+}
+
+- (BOOL)pressButtonSynchronously:(HIDButtonType)button duration:(NSTimeInterval)duration timeout:(NSTimeInterval)timeout error:(NSString **)error {
+    __block BOOL ok = NO;
+    __block NSString *err = nil;
+    dispatch_semaphore_t sem = dispatch_semaphore_create(0);
+
+    [[IOSMCPHIDManager sharedInstance] pressButton:button duration:duration completion:^(BOOL success, NSString *buttonError) {
+        ok = success;
+        err = buttonError;
+        dispatch_semaphore_signal(sem);
+    }];
+
+    long waitResult = dispatch_semaphore_wait(sem, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(MAX(timeout, 0.1) * NSEC_PER_SEC)));
+    if (waitResult != 0) {
+        if (error) *error = @"timeout";
+        return NO;
+    }
+    if (!ok && error) {
+        *error = err ?: @"unknown";
+    }
+    return ok;
+}
+
+- (NSDictionary *)executeWakeAndHome:(id)reqId args:(NSDictionary *)args {
+    NSString *paramError = nil;
+    NSString *sequence = nil;
+    double duration = 100;
+    double delayMs = 300;
+
+    if (!MCPStringFromArgs(args, @"sequence", NO, &sequence, &paramError) ||
+        !MCPNumberFromArgs(args, @"duration", 100, NO, &duration, &paramError) ||
+        !MCPNumberFromArgs(args, @"delay_ms", 300, NO, &delayMs, &paramError)) {
+        return [self mcpError:reqId code:-32602 message:paramError];
+    }
+
+    if (duration <= 0) duration = 100;
+    if (delayMs < 0) delayMs = 0;
+
+    NSString *normalizedSequence = sequence.length > 0 ? sequence.lowercaseString : @"auto";
+    if (![normalizedSequence isEqualToString:@"auto"] &&
+        ![normalizedSequence isEqualToString:@"power_then_home"] &&
+        ![normalizedSequence isEqualToString:@"home_twice"]) {
+        return [self mcpError:reqId code:-32602 message:@"Invalid sequence: expected auto, power_then_home, or home_twice"];
+    }
+
+    NSDictionary *beforeState = [[ScreenManager sharedInstance] deviceInteractionState];
+    NSString *sequenceUsed = normalizedSequence;
+    if ([normalizedSequence isEqualToString:@"auto"]) {
+        id lockScreenVisibleValue = beforeState[@"lock_screen_visible"];
+        BOOL lockScreenVisibleKnown = [lockScreenVisibleValue respondsToSelector:@selector(boolValue)];
+        BOOL lockScreenVisible = lockScreenVisibleKnown ? [lockScreenVisibleValue boolValue] : NO;
+        id screenOnValue = beforeState[@"screen_on"];
+        BOOL screenOnKnown = [screenOnValue respondsToSelector:@selector(boolValue)];
+        BOOL screenOn = screenOnKnown ? [screenOnValue boolValue] : NO;
+        sequenceUsed = ((lockScreenVisibleKnown && lockScreenVisible) || (screenOnKnown && screenOn)) ? @"home_twice" : @"power_then_home";
+    }
+
+    NSString *err = nil;
+    NSMutableArray<NSString *> *steps = [NSMutableArray array];
+
+    if ([sequenceUsed isEqualToString:@"power_then_home"]) {
+        if (![self pressButtonSynchronously:HIDButtonPower duration:duration timeout:5 error:&err]) {
+            return [self mcpSuccess:reqId text:[NSString stringWithFormat:@"wake_and_home failed at power: %@", err ?: @"unknown"] isError:YES];
+        }
+        [steps addObject:@"power"];
+        usleep((useconds_t)(delayMs * 1000.0));
+
+        if (![self pressButtonSynchronously:HIDButtonHome duration:duration timeout:5 error:&err]) {
+            return [self mcpSuccess:reqId text:[NSString stringWithFormat:@"wake_and_home failed at home: %@", err ?: @"unknown"] isError:YES];
+        }
+        [steps addObject:@"home"];
+    } else {
+        for (NSInteger idx = 0; idx < 2; idx++) {
+            if (![self pressButtonSynchronously:HIDButtonHome duration:duration timeout:5 error:&err]) {
+                return [self mcpSuccess:reqId text:[NSString stringWithFormat:@"wake_and_home failed at home #%ld: %@", (long)(idx + 1), err ?: @"unknown"] isError:YES];
+            }
+            [steps addObject:@"home"];
+            if (idx == 0) {
+                usleep((useconds_t)(delayMs * 1000.0));
+            }
+        }
+    }
+
+    usleep((useconds_t)(MAX(delayMs, 250.0) * 1000.0));
+    NSDictionary *afterState = [[ScreenManager sharedInstance] deviceInteractionState];
+    NSDictionary *result = @{
+        @"sequence": sequenceUsed,
+        @"steps": steps,
+        @"before_state": beforeState ?: @{},
+        @"after_state": afterState ?: @{},
+        @"verify_required": @YES,
+        @"next_step": @"Call screenshot, get_ui_elements, or get_frontmost_app before continuing. Do not assume this reached the Home screen without verification."
+    };
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:result options:0 error:nil];
+    NSString *jsonStr = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+    return [self mcpSuccess:reqId text:jsonStr];
 }
 
 - (NSDictionary *)executeTap:(id)reqId args:(NSDictionary *)args {
@@ -1246,8 +1540,8 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
     }
 
     CGPoint point = CGPointMake(x, y);
-    __block BOOL ok;
-    __block NSString *err;
+    __block BOOL ok = NO;
+    __block NSString *err = nil;
     dispatch_semaphore_t sem = dispatch_semaphore_create(0);
 
     [[IOSMCPHIDManager sharedInstance] tapAtPoint:point completion:^(BOOL success, NSString *error) {
@@ -1286,8 +1580,8 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
     if (duration <= 0) duration = 300;
     if (steps <= 0) steps = 20;
 
-    __block BOOL ok;
-    __block NSString *err;
+    __block BOOL ok = NO;
+    __block NSString *err = nil;
     dispatch_semaphore_t sem = dispatch_semaphore_create(0);
 
     [[IOSMCPHIDManager sharedInstance] swipeFromPoint:from toPoint:to duration:duration steps:steps completion:^(BOOL success, NSString *error) {
@@ -1649,7 +1943,7 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
     NSInteger limit = (NSInteger)limitValue;
 
     __block NSDictionary *payload;
-    __block NSString *err;
+    __block NSString *err = nil;
     dispatch_semaphore_t sem = dispatch_semaphore_create(0);
 
     NSInteger compactMaxElements = limit > 0 ? limit : maxElements;
@@ -1722,7 +2016,7 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
 
     CGPoint point = CGPointMake(x, y);
     __block NSDictionary *element;
-    __block NSString *err;
+    __block NSString *err = nil;
     dispatch_semaphore_t sem = dispatch_semaphore_create(0);
 
     [[AccessibilityManager sharedInstance] getElementAtPoint:point completion:^(NSDictionary *result, NSString *error) {
@@ -1788,8 +2082,8 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
         return [self mcpError:reqId code:-32602 message:paramError];
     }
 
-    __block BOOL ok;
-    __block NSString *err;
+    __block BOOL ok = NO;
+    __block NSString *err = nil;
     dispatch_semaphore_t sem = dispatch_semaphore_create(0);
 
     [[TextInputManager sharedInstance] inputText:text completion:^(BOOL success, NSString *error) {
@@ -1816,8 +2110,8 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
     if (!MCPNumberFromArgs(args, @"delay_ms", 50, NO, &delayMs, &paramError)) {
         return [self mcpError:reqId code:-32602 message:paramError];
     }
-    __block BOOL ok;
-    __block NSString *err;
+    __block BOOL ok = NO;
+    __block NSString *err = nil;
     dispatch_semaphore_t sem = dispatch_semaphore_create(0);
 
     [[TextInputManager sharedInstance] typeText:text delayMs:delayMs completion:^(BOOL success, NSString *error) {
@@ -1844,8 +2138,8 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
         return [self mcpError:reqId code:-32602 message:paramError];
     }
 
-    __block BOOL ok;
-    __block NSString *err;
+    __block BOOL ok = NO;
+    __block NSString *err = nil;
     dispatch_semaphore_t sem = dispatch_semaphore_create(0);
 
     [[TextInputManager sharedInstance] pressKey:key completion:^(BOOL success, NSString *error) {
@@ -1990,7 +2284,13 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
 
 #pragma mark - Device Info Execution
 
-- (NSDictionary *)executeGetDeviceInfo:(id)reqId {
+- (NSDictionary *)executeGetDeviceInfo:(id)reqId args:(NSDictionary *)args {
+    NSString *paramError = nil;
+    BOOL debug = NO;
+    if (!MCPBoolFromArgs(args, @"debug", NO, &debug, &paramError)) {
+        return [self mcpError:reqId code:-32602 message:paramError];
+    }
+
     __block NSDictionary *info = nil;
 
     dispatch_block_t block = ^{
@@ -2004,6 +2304,7 @@ static NSDictionary *MCPRandomizedTapPointForElement(NSDictionary *element) {
         result[@"systemName"] = [[UIDevice currentDevice] systemName] ?: @"unknown";
         result[@"systemVersion"] = [[UIDevice currentDevice] systemVersion] ?: @"unknown";
         result[@"model"] = [[UIDevice currentDevice] model] ?: @"unknown";
+        result[@"jailbreak"] = MCPJailbreakInfo(debug);
 
         // Battery
         [[UIDevice currentDevice] setBatteryMonitoringEnabled:YES];

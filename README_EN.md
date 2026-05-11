@@ -9,18 +9,18 @@ iOS MCP is an [MCP (Model Context Protocol)](https://modelcontextprotocol.io) se
 | Category | Tools | Description |
 |----------|-------|-------------|
 | **Touch** | `tap_screen` `swipe_screen` `long_press` `double_tap` `drag_and_drop` | Precise screen coordinate operations |
-| **Buttons** | `press_home` `press_power` `press_volume_up` `press_volume_down` `toggle_mute` | HID physical button simulation |
+| **Buttons** | `press_home` `press_power` `press_volume_up` `press_volume_down` `toggle_mute` `wake_and_home` | HID physical button simulation, lock/off-screen wake flow |
 | **Text Input** | `input_text` `type_text` `press_key` | Pasteboard fast input / HID character-by-character / special keys |
 | **Screenshot** | `screenshot` `get_screen_info` | Base64 JPEG screenshot, screen dimensions & orientation |
 | **App Management** | `launch_app` `kill_app` `list_apps` `list_running_apps` `get_frontmost_app` `install_app` `uninstall_app` | Launch/kill/install/uninstall apps |
 | **Accessibility** | `get_ui_elements` `get_element_at_point` | UI element tree, element lookup by coordinates |
 | **Clipboard** | `get_clipboard` `set_clipboard` | Read/write clipboard |
 | **Device Control** | `get_brightness` `set_brightness` `get_volume` `set_volume` | Brightness and volume |
-| **Device Info** | `get_device_info` | Model, iOS version, battery, storage, memory |
+| **Device Info** | `get_device_info` | Model, iOS version, battery, storage, memory, jailbreak type |
 | **URL** | `open_url` | Open URLs or URL schemes |
 | **Shell** | `run_command` | Execute shell commands |
 
-**33** MCP tools covering the major iOS device automation scenarios.
+**34** MCP tools covering the major iOS device automation scenarios.
 
 ## Runtime Requirements
 
@@ -70,7 +70,7 @@ http://DEVICE_IP:8090/health
 3. If you get the following response, the service is running correctly:
 
 ```json
-{"status":"ok","server":"ios-mcp","version":"1.0.2"}
+{"status":"ok","server":"ios-mcp","version":"1.1.0"}
 ```
 
 ## Usage
@@ -84,6 +84,7 @@ After installation, open **Settings** → **iOS MCP** on your device. Start the 
 ## Security Notes
 
 - The MCP server has no built-in authentication — it is recommended to use it only on local networks
+- When the device is locked or the screen is off, the server blocks interactive/mutating tools such as tap, swipe, text input, app launch, and shell commands; observation, screenshot, and wake/recovery tools remain allowed
 - The `run_command` tool can execute arbitrary shell commands — use with caution
 - `mcp-root` provides root privilege elevation, intended for internal use only
 
@@ -109,4 +110,10 @@ Feel free to add me on WeChat or follow the official account for updates and the
 
 ## License
 
-MIT License
+Project-owned code is licensed under the MIT License. See [LICENSE](LICENSE).
+
+If you use, modify, redistribute, or incorporate any substantial portion of the project-owned source code, retain the copyright notice and license text. [NOTICE](NOTICE) provides project attribution and disclaimer information.
+
+This project is provided on an "AS IS" basis, without warranties or conditions of any kind. The author is not responsible for device malfunction, data loss, service interruption, account risk, system damage, security issues, commercial loss, or any other direct or indirect impact caused by using, modifying, redistributing, deploying, or running this project.
+
+Bundled third-party components, including AppSync Unified, appinst, ldid, OpenSSL, libplist, and libzip, remain under their own licenses. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

@@ -36,6 +36,11 @@ static id MCPAppMsgSendObject(id target, SEL selector) {
     return ((id (*)(id, SEL))objc_msgSend)(target, selector);
 }
 
+static id MCPAppMsgSendObjectArg(id target, SEL selector, id arg) {
+    if (!target || !selector) return nil;
+    return ((id (*)(id, SEL, id))objc_msgSend)(target, selector, arg);
+}
+
 static BOOL MCPURLUsesSettingsScheme(NSURL *url) {
     NSString *scheme = url.scheme.lowercaseString ?: @"";
     return [scheme isEqualToString:@"prefs"] || [scheme isEqualToString:@"app-prefs"];
@@ -1593,9 +1598,63 @@ static BOOL MCPWaitForURLOpenVerification(NSURL *url, NSString *previousBundleId
 
 #pragma mark - Uninstall App
 
+- (BOOL)isAppInstalled:(NSString *)bundleId {
+    if (!bundleId.length) return NO;
+
+    __block BOOL installed = NO;
+    dispatch_block_t block = ^{
+        Class LSWorkspaceClass = objc_getClass("LSApplicationWorkspace");
+        if (LSWorkspaceClass) {
+            id workspace = [LSWorkspaceClass performSelector:@selector(defaultWorkspace)];
+            SEL proxySel = @selector(applicationProxyForIdentifier:);
+            if ([workspace respondsToSelector:proxySel]) {
+                id proxy = MCPAppMsgSendObjectArg(workspace, proxySel, bundleId);
+                if (proxy) {
+                    installed = YES;
+                    return;
+                }
+            }
+
+            SEL allAppsSel = @selector(allInstalledApplications);
+            if ([workspace respondsToSelector:allAppsSel]) {
+                NSArray *allApps = MCPAppMsgSendObject(workspace, allAppsSel);
+                for (id proxy in allApps) {
+                    if (![proxy respondsToSelector:@selector(applicationIdentifier)]) continue;
+                    NSString *appId = [proxy performSelector:@selector(applicationIdentifier)];
+                    if ([appId isEqualToString:bundleId]) {
+                        installed = YES;
+                        return;
+                    }
+                }
+            }
+        }
+
+        Class SBAppCtrl = objc_getClass("SBApplicationController");
+        if (SBAppCtrl) {
+            id appCtrl = [SBAppCtrl performSelector:@selector(sharedInstance)];
+            if ([appCtrl respondsToSelector:@selector(applicationWithBundleIdentifier:)]) {
+                id sbApp = MCPAppMsgSendObjectArg(appCtrl, @selector(applicationWithBundleIdentifier:), bundleId);
+                installed = (sbApp != nil);
+            }
+        }
+    };
+
+    if ([NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_sync(dispatch_get_main_queue(), block);
+    }
+    return installed;
+}
+
 - (BOOL)uninstallApp:(NSString *)bundleId error:(NSString **)error {
     if (!bundleId.length) {
         if (error) *error = @"Empty bundle ID";
+        return NO;
+    }
+
+    if (![self isAppInstalled:bundleId]) {
+        if (error) *error = [NSString stringWithFormat:@"App not found: %@", bundleId];
         return NO;
     }
 
@@ -1646,8 +1705,24 @@ static BOOL MCPWaitForURLOpenVerification(NSURL *url, NSString *previousBundleId
         dispatch_sync(dispatch_get_main_queue(), block);
     }
 
-    if (error) *error = errMsg;
-    return ok;
+    if (!ok) {
+        if (error) *error = errMsg;
+        return NO;
+    }
+
+    NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:10.0];
+    while ([deadline timeIntervalSinceNow] > 0) {
+        if (![self isAppInstalled:bundleId]) {
+            if (error) *error = nil;
+            return YES;
+        }
+        [NSThread sleepForTimeInterval:0.25];
+    }
+
+    if (error) {
+        *error = [NSString stringWithFormat:@"Uninstall request was accepted, but %@ is still installed", bundleId];
+    }
+    return NO;
 }
 
 @end

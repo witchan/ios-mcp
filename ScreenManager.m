@@ -1,6 +1,7 @@
 #import "ScreenManager.h"
 #import <UIKit/UIKit.h>
 #import <dlfcn.h>
+#import <objc/runtime.h>
 #import <objc/message.h>
 
 typedef struct __IOSurface *IOSurfaceRef;
@@ -18,6 +19,41 @@ static const CGFloat kMCPScreenshotMinimumJPEGQuality = 0.45;
 static const NSInteger kMCPScreenshotJPEGSearchPasses = 6;
 static const NSInteger kMCPScreenshotResizePasses = 4;
 
+static id MCPObjectFromClassSelector(const char *className, SEL selector) {
+    Class cls = objc_getClass(className);
+    if (!cls || !selector || ![cls respondsToSelector:selector]) return nil;
+
+    @try {
+        return ((id (*)(id, SEL))objc_msgSend)((id)cls, selector);
+    } @catch (__unused NSException *exception) {
+        return nil;
+    }
+}
+
+static BOOL MCPReadBoolSelector(id target, SEL selector, BOOL *outValue) {
+    if (!target || !selector || ![target respondsToSelector:selector]) return NO;
+
+    @try {
+        BOOL value = ((BOOL (*)(id, SEL))objc_msgSend)(target, selector);
+        if (outValue) *outValue = value;
+        return YES;
+    } @catch (__unused NSException *exception) {
+        return NO;
+    }
+}
+
+static BOOL MCPReadIntegerSelector(id target, SEL selector, NSInteger *outValue) {
+    if (!target || !selector || ![target respondsToSelector:selector]) return NO;
+
+    @try {
+        NSInteger value = ((NSInteger (*)(id, SEL))objc_msgSend)(target, selector);
+        if (outValue) *outValue = value;
+        return YES;
+    } @catch (__unused NSException *exception) {
+        return NO;
+    }
+}
+
 __attribute__((constructor)) static void _resolveScreenImageFunc(void) {
     _UICreateScreenUIImageFunc = (UICreateScreenUIImageFunc)dlsym(RTLD_DEFAULT, "_UICreateScreenUIImage");
     _UICreateCGImageFromIOSurfaceFunc = (UICreateCGImageFromIOSurfaceFunc)dlsym(RTLD_DEFAULT, "UICreateCGImageFromIOSurface");
@@ -26,6 +62,10 @@ __attribute__((constructor)) static void _resolveScreenImageFunc(void) {
     _CARenderServerCaptureDisplayFunc = (CARenderServerCaptureDisplayFunc)dlsym(quartzCore ?: RTLD_DEFAULT, "CARenderServerCaptureDisplay");
 }
 
+
+@interface ScreenManager ()
+- (NSDictionary *)deviceInteractionStateOnMainThread;
+@end
 
 @implementation ScreenManager
 
@@ -68,14 +108,25 @@ __attribute__((constructor)) static void _resolveScreenImageFunc(void) {
             default:                                       orientationStr = @"unknown"; break;
         }
 
-        info = @{
+        NSDictionary *interactionState = [self deviceInteractionStateOnMainThread];
+        NSMutableDictionary *result = [@{
             @"width":       @(bounds.size.width),
             @"height":      @(bounds.size.height),
             @"scale":       @(scale),
             @"pixel_width": @(bounds.size.width * scale),
             @"pixel_height":@(bounds.size.height * scale),
             @"orientation": orientationStr,
-        };
+        } mutableCopy];
+
+        if (interactionState.count > 0) {
+            result[@"device_state"] = interactionState;
+            id locked = interactionState[@"locked"];
+            id screenOn = interactionState[@"screen_on"];
+            if (locked) result[@"locked"] = locked;
+            if (screenOn) result[@"screen_on"] = screenOn;
+        }
+
+        info = [result copy];
     };
 
     if ([NSThread isMainThread]) {
@@ -84,6 +135,122 @@ __attribute__((constructor)) static void _resolveScreenImageFunc(void) {
         dispatch_sync(dispatch_get_main_queue(), block);
     }
     return info;
+}
+
+- (NSDictionary *)deviceInteractionState {
+    __block NSDictionary *state = nil;
+    dispatch_block_t block = ^{
+        state = [self deviceInteractionStateOnMainThread];
+    };
+
+    if ([NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_sync(dispatch_get_main_queue(), block);
+    }
+    return state ?: @{};
+}
+
+- (NSDictionary *)deviceInteractionStateOnMainThread {
+    NSMutableDictionary *state = [NSMutableDictionary dictionary];
+
+    id springBoard = MCPObjectFromClassSelector("SpringBoard", @selector(sharedApplication));
+    id lockScreenManager = MCPObjectFromClassSelector("SBLockScreenManager", @selector(sharedInstance));
+    id lockStateAggregator = MCPObjectFromClassSelector("SBLockStateAggregator", @selector(sharedInstance));
+    id backlightController = MCPObjectFromClassSelector("SBBacklightController", @selector(sharedInstance));
+
+    BOOL locked = NO;
+    BOOL lockedKnown = NO;
+    BOOL lockScreenVisible = NO;
+    BOOL lockScreenVisibleKnown = NO;
+
+    NSArray<NSString *> *lockSelectors = @[
+        @"isUILocked",
+        @"isLocked",
+        @"isSecurelyLocked",
+        @"isDeviceLocked"
+    ];
+    for (NSString *selectorName in lockSelectors) {
+        SEL selector = NSSelectorFromString(selectorName);
+        BOOL value = NO;
+        if (MCPReadBoolSelector(lockScreenManager, selector, &value) ||
+            MCPReadBoolSelector(springBoard, selector, &value)) {
+            locked = locked || value;
+            lockedKnown = YES;
+        }
+    }
+
+    NSArray<NSString *> *visibleSelectors = @[
+        @"isLockScreenVisible",
+        @"isLockScreenActive",
+        @"isShowingLockScreen",
+        @"lockScreenVisible",
+        @"lockScreenActive"
+    ];
+    for (NSString *selectorName in visibleSelectors) {
+        SEL selector = NSSelectorFromString(selectorName);
+        BOOL value = NO;
+        if (MCPReadBoolSelector(lockScreenManager, selector, &value) ||
+            MCPReadBoolSelector(springBoard, selector, &value)) {
+            lockScreenVisible = lockScreenVisible || value;
+            lockScreenVisibleKnown = YES;
+        }
+    }
+
+    NSInteger lockState = 0;
+    if (MCPReadIntegerSelector(lockStateAggregator, @selector(lockState), &lockState)) {
+        state[@"raw_lock_state"] = @(lockState);
+        if (!lockedKnown && lockState != 0) {
+            locked = YES;
+            lockedKnown = YES;
+        }
+    }
+
+    BOOL protectedDataAvailable = UIApplication.sharedApplication.protectedDataAvailable;
+    state[@"protected_data_available"] = @(protectedDataAvailable);
+    if (!protectedDataAvailable) {
+        locked = YES;
+        lockedKnown = YES;
+    }
+
+    BOOL screenOn = NO;
+    BOOL screenOnKnown = NO;
+    NSArray<NSString *> *screenOnSelectors = @[
+        @"screenIsOn",
+        @"isScreenOn",
+        @"displayIsOn",
+        @"isDisplayOn",
+        @"isBacklightOn"
+    ];
+    for (NSString *selectorName in screenOnSelectors) {
+        BOOL value = NO;
+        if (MCPReadBoolSelector(backlightController, NSSelectorFromString(selectorName), &value)) {
+            screenOn = value;
+            screenOnKnown = YES;
+            break;
+        }
+    }
+
+    if (lockedKnown) {
+        state[@"locked"] = @(locked);
+    } else {
+        state[@"locked"] = [NSNull null];
+    }
+    state[@"locked_known"] = @(lockedKnown);
+
+    if (lockScreenVisibleKnown) {
+        state[@"lock_screen_visible"] = @(lockScreenVisible);
+    }
+    if (screenOnKnown) {
+        state[@"screen_on"] = @(screenOn);
+    } else {
+        state[@"screen_on"] = [NSNull null];
+    }
+    state[@"screen_on_known"] = @(screenOnKnown);
+
+    state[@"automation_hint"] = @"If locked or the screen is off, do not assume one Home press reaches the Home screen. Use wake_and_home, or press Power then Home, or press Home twice, then verify with screenshot/get_ui_elements.";
+
+    return [state copy];
 }
 
 - (NSDictionary *)takeScreenshotPayload {

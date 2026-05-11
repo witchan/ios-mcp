@@ -48,3 +48,7 @@ static inline NSString *IOSMCPCurrentLANIPAddress(void) {
 static inline NSString *IOSMCPServiceURLString(void) {
     return [NSString stringWithFormat:@"http://%@:%d/mcp", IOSMCPCurrentLANIPAddress(), IOS_MCP_DEFAULT_PORT];
 }
+
+static inline NSString *IOSMCPHealthURLString(void) {
+    return [NSString stringWithFormat:@"http://%@:%d/health", IOSMCPCurrentLANIPAddress(), IOS_MCP_DEFAULT_PORT];
+}

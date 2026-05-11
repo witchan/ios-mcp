@@ -218,6 +218,7 @@
             @"- 触控：点击、滑动、长按、双击、拖拽\n"
             @"- 文字输入：快速粘贴输入、逐字键盘模拟、特殊键（回车、删除等）\n"
             @"- 硬件按键：Home、电源、音量、静音\n"
+            @"- 唤醒/回到主屏：wake_and_home（锁屏或熄屏时优先使用）\n"
             @"- 截图（screenshot 返回 MCP image content，不是 text；图片 base64 在 result.content[0].data，mimeType 通常是 image/jpeg）\n"
             @"- App 管理：启动、关闭、列表、安装 IPA（无需签名）、卸载\n"
             @"- UI 无障碍：获取当前页面节点树、坐标查询元素\n"
@@ -225,14 +226,20 @@
             @"- 设备控制：亮度、音量\n"
             @"- 打开 URL 或 URL Scheme\n"
             @"- Shell 命令执行\n"
-            @"- 设备信息：型号、iOS 版本、电池、存储\n\n"
+            @"- 设备信息：型号、iOS 版本、电池、存储、越狱方式\n\n"
             @"操作规则:\n"
-            @"1. 开始前先获取当前前台 App、UI 节点和必要截图。\n"
-            @"2. 交互时优先根据 UI 节点执行点击和输入，不要盲点。\n"
-            @"3. 页面变化后重新读取 UI 节点，再继续下一步。\n"
-            @"4. 如果目标元素不明显，先截图再判断。\n"
-            @"5. 处理 screenshot 结果时，按 image content 解析，不要读取 result.content[0].text。",
-            IOSMCPServiceURLString()];
+            @"1. 开始前先获取当前前台 App、屏幕信息、UI 节点和必要截图。\n"
+            @"2. 如果 get_screen_info 显示 locked=true/screen_on=false，或截图像锁屏，不要继续普通 App 操作；先调用 wake_and_home，或按电源后按 Home，或按两次 Home，然后重新截图确认。\n"
+            @"3. 服务端启用了锁屏保护；锁屏或熄屏时，点击、滑动、输入、启动 App、Shell 等交互/写入类工具会被拦截，只允许状态查询、截图和 wake_and_home 等恢复工具。\n"
+            @"4. 不要把单次 press_home 当成已经进入主屏幕；锁屏状态下一次 Home 通常只是唤醒或进入解锁提示。\n"
+            @"5. 交互时优先根据 UI 节点执行点击和输入，不要盲点。\n"
+            @"6. 页面变化后重新读取 UI 节点，再继续下一步。\n"
+            @"7. 如果目标元素不明显，先截图再判断。\n"
+            @"8. 文本输入先用 input_text；如果 input_text 失败、超时或返回 isError，立即用 type_text 输入同一段文本，不要反复调用 input_text。\n"
+            @"9. 健康检查不要使用 for i in {1..30}，因为某些 /bin/sh 不展开花括号。使用 while/seq，并设置 --connect-timeout 3 --max-time 5，例如：i=0; while [ $i -lt 30 ]; do r=$(curl -sS --connect-timeout 3 --max-time 5 %@ 2>/dev/null || true); [ -n \"$r\" ] && echo \"$r\" && exit 0; i=$((i+1)); sleep 1; done; echo health_timeout; exit 1\n"
+            @"10. 处理 screenshot 结果时，按 image content 解析，不要读取 result.content[0].text。",
+            IOSMCPServiceURLString(),
+            IOSMCPHealthURLString()];
 }
 
 - (void)showAlertWithTitle:(NSString *)title message:(NSString *)message {

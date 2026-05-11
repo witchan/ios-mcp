@@ -21,6 +21,8 @@ ifeq ($(THEOS_PACKAGE_SCHEME),roothide)
     ios-mcp_LIBRARIES = roothide
     ios-mcp_CFLAGS += -DMCP_ROOTHIDE=1
     iosmcpprefs_LIBRARIES = roothide
+else ifeq ($(THEOS_PACKAGE_SCHEME),rootless)
+    ios-mcp_CFLAGS += -DMCP_ROOTLESS=1
 endif
 
 iosmcpprefs_FILES = prefs/IOSMCPRootListController.m prefs/IOSMCPQRCodeCell.m
@@ -37,6 +39,13 @@ include $(THEOS_MAKE_PATH)/bundle.mk
 after-stage::
 	$(ECHO_NOTHING)mkdir -p "$(THEOS_STAGING_DIR)/Library/PreferenceLoader/Preferences"$(ECHO_END)
 	$(ECHO_NOTHING)cp prefs/entry/ios-mcp.plist "$(THEOS_STAGING_DIR)/Library/PreferenceLoader/Preferences/ios-mcp.plist"$(ECHO_END)
+	@# Bundle license and third-party notices for binary redistribution
+	$(ECHO_NOTHING)mkdir -p "$(THEOS_STAGING_DIR)/usr/share/doc/ios-mcp"$(ECHO_END)
+	$(ECHO_NOTHING)cp LICENSE "$(THEOS_STAGING_DIR)/usr/share/doc/ios-mcp/LICENSE"$(ECHO_END)
+	$(ECHO_NOTHING)cp NOTICE "$(THEOS_STAGING_DIR)/usr/share/doc/ios-mcp/NOTICE"$(ECHO_END)
+	$(ECHO_NOTHING)cp THIRD_PARTY_NOTICES.md "$(THEOS_STAGING_DIR)/usr/share/doc/ios-mcp/THIRD_PARTY_NOTICES.md"$(ECHO_END)
+	$(ECHO_NOTHING)cp AppSync/LICENSE "$(THEOS_STAGING_DIR)/usr/share/doc/ios-mcp/GPL-3.0-AppSync.txt"$(ECHO_END)
+	$(ECHO_NOTHING)cp third_party/ldid/COPYING "$(THEOS_STAGING_DIR)/usr/share/doc/ios-mcp/AGPL-3.0-ldid.txt"$(ECHO_END)
 	@# Bundle mcp-appsync (bypass installd signature checks)
 	$(ECHO_NOTHING)mkdir -p "$(THEOS_STAGING_DIR)/Library/MobileSubstrate/DynamicLibraries"$(ECHO_END)
 	$(ECHO_NOTHING)cp AppSync/.theos/obj/mcp-appsync-installd.dylib "$(THEOS_STAGING_DIR)/Library/MobileSubstrate/DynamicLibraries/mcp-appsync-installd.dylib"$(ECHO_END)

@@ -9,18 +9,18 @@ iOS MCP 是一个运行在越狱 iPhone 上的 [MCP (Model Context Protocol)](ht
 | 类别 | 工具 | 说明 |
 |------|------|------|
 | **触控手势** | `tap_screen` `swipe_screen` `long_press` `double_tap` `drag_and_drop` | 精确屏幕坐标操作 |
-| **硬件按键** | `press_home` `press_power` `press_volume_up` `press_volume_down` `toggle_mute` | HID 模拟物理按键 |
+| **硬件按键** | `press_home` `press_power` `press_volume_up` `press_volume_down` `toggle_mute` `wake_and_home` | HID 模拟物理按键，锁屏/熄屏唤醒 |
 | **文字输入** | `input_text` `type_text` `press_key` | 剪贴板快速输入 / HID 逐字模拟 / 特殊键 |
 | **截图** | `screenshot` `get_screen_info` | Base64 JPEG 截图、屏幕尺寸与方向 |
 | **App 管理** | `launch_app` `kill_app` `list_apps` `list_running_apps` `get_frontmost_app` `install_app` `uninstall_app` | 启动/关闭/安装/卸载 App |
 | **无障碍** | `get_ui_elements` `get_element_at_point` | 获取 UI 节点树、坐标元素查询 |
 | **剪贴板** | `get_clipboard` `set_clipboard` | 读写剪贴板内容 |
 | **设备控制** | `get_brightness` `set_brightness` `get_volume` `set_volume` | 亮度、音量 |
-| **设备信息** | `get_device_info` | 型号、iOS 版本、电池、存储、内存 |
+| **设备信息** | `get_device_info` | 型号、iOS 版本、电池、存储、内存、越狱方式 |
 | **URL** | `open_url` | 打开链接或 URL Scheme |
 | **Shell** | `run_command` | 执行 Shell 命令 |
 
-共 **33** 个 MCP 工具，覆盖 iOS 设备自动化的主要场景。
+共 **34** 个 MCP 工具，覆盖 iOS 设备自动化的主要场景。
 
 ## 运行要求
 
@@ -70,7 +70,7 @@ http://设备IP:8090/health
 3. 返回以下内容表示服务启动正常：
 
 ```json
-{"status":"ok","server":"ios-mcp","version":"1.0.2"}
+{"status":"ok","server":"ios-mcp","version":"1.1.0"}
 ```
 
 ## 使用
@@ -85,6 +85,7 @@ http://设备IP:8090/health
 ## 安全说明
 
 - MCP 服务无内置认证，建议仅在局域网环境下使用
+- 锁屏或熄屏时，服务端会拦截点击、滑动、输入、启动 App、Shell 等交互/写入类工具，只放行状态查询、截图和唤醒恢复类工具
 - `run_command` 工具可执行任意 Shell 命令，请谨慎使用
 - `mcp-root` 提供 root 提权能力，仅限包内工具使用
 
@@ -110,4 +111,10 @@ http://设备IP:8090/health
 
 ## 许可
 
-MIT License
+本项目自有代码使用 MIT License，详见 [LICENSE](LICENSE)。
+
+使用、修改、分发或合并本项目自有源码及其重要部分时，应保留版权声明和许可证文本。[NOTICE](NOTICE) 提供项目出处和免责说明。
+
+本项目按 “AS IS” 方式提供，不提供任何明示或暗示担保。因使用、修改、分发、部署或运行本项目导致的设备异常、数据丢失、服务中断、账号风险、系统损坏、安全问题、商业损失或其他直接/间接影响，作者不承担责任。
+
+项目中包含的第三方组件（如 AppSync Unified、appinst、ldid、OpenSSL、libplist、libzip）遵循各自的开源协议，详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
