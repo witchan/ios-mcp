@@ -10,6 +10,7 @@
 #import "LogManager.h"
 #import "OCRManager.h"
 #import "MCPLogger.h"
+#import "IOSMCPPreferences.h"
 #import <UIKit/UIKit.h>
 #import <sys/socket.h>
 #import <netinet/in.h>
@@ -655,6 +656,7 @@ static NSDictionary *MCPElementSummary(NSDictionary *element) {
 - (NSDictionary *)handleInitialize:(id)reqId params:(NSDictionary *)params;
 - (NSDictionary *)handleToolsList:(id)reqId;
 - (NSDictionary *)handleToolsCall:(id)reqId params:(NSDictionary *)params;
+- (NSDictionary *)performScreenTaskForRequest:(id)reqId task:(NSDictionary *(^)(void))task;
 - (NSDictionary *)lockedScreenGuardResponseForTool:(NSString *)toolName reqId:(id)reqId;
 - (NSDictionary *)executeButtonPress:(id)reqId button:(HIDButtonType)button args:(NSDictionary *)args label:(NSString *)label;
 - (BOOL)pressButtonSynchronously:(HIDButtonType)button duration:(NSTimeInterval)duration timeout:(NSTimeInterval)timeout error:(NSString **)error;
@@ -725,6 +727,7 @@ static NSDictionary *MCPElementSummary(NSDictionary *element) {
     int _serverSocket;
     dispatch_source_t _acceptSource;
     dispatch_queue_t _clientQueue;
+    dispatch_semaphore_t _screenTaskSemaphore;
     NSString *_sessionId;
     NSString *_negotiatedProtocolVersion;
 }
@@ -742,7 +745,12 @@ static NSDictionary *MCPElementSummary(NSDictionary *element) {
     self = [super init];
     if (self) {
         _serverSocket = -1;
-        _clientQueue = dispatch_queue_create("com.witchan.ios-mcp.client", DISPATCH_QUEUE_CONCURRENT);
+        dispatch_queue_attr_t clientAttributes =
+            dispatch_queue_attr_make_with_autorelease_frequency(DISPATCH_QUEUE_CONCURRENT,
+                                                                 DISPATCH_AUTORELEASE_FREQUENCY_WORK_ITEM);
+        _clientQueue = dispatch_queue_create("com.witchan.ios-mcp.client", clientAttributes);
+        _screenTaskSemaphore =
+            dispatch_semaphore_create(IOSMCPConfiguredMaxConcurrentScreenTasks());
         _sessionId = [[NSUUID UUID] UUIDString];
         _negotiatedProtocolVersion = MCP_PROTOCOL_VERSION_LATEST;
     }
@@ -808,7 +816,10 @@ static NSDictionary *MCPElementSummary(NSDictionary *element) {
     _port = port;
     _running = YES;
 
-    dispatch_queue_t queue = dispatch_queue_create("com.witchan.ios-mcp.accept", DISPATCH_QUEUE_CONCURRENT);
+    dispatch_queue_attr_t acceptAttributes =
+        dispatch_queue_attr_make_with_autorelease_frequency(DISPATCH_QUEUE_CONCURRENT,
+                                                             DISPATCH_AUTORELEASE_FREQUENCY_WORK_ITEM);
+    dispatch_queue_t queue = dispatch_queue_create("com.witchan.ios-mcp.accept", acceptAttributes);
     _acceptSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, sock, 0, queue);
 
     __weak typeof(self) weakSelf = self;
@@ -819,7 +830,9 @@ static NSDictionary *MCPElementSummary(NSDictionary *element) {
         if (client >= 0) {
             MCPSetCloseOnExec(client);
             dispatch_async(self->_clientQueue, ^{
-                [self handleClient:client];
+                @autoreleasepool {
+                    [self handleClient:client];
+                }
             });
         }
     });
@@ -2150,6 +2163,27 @@ static NSString *MCPLogId(id reqId) {
 
 #pragma mark - MCP: tools/call
 
+- (NSDictionary *)performScreenTaskForRequest:(id)reqId task:(NSDictionary *(^)(void))task {
+    if (!task) {
+        return [self mcpError:reqId code:-32603 message:@"Missing screen task"];
+    }
+
+    dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW, 30 * NSEC_PER_SEC);
+    if (dispatch_semaphore_wait(_screenTaskSemaphore, timeout) != 0) {
+        return [self mcpError:reqId code:-32000 message:@"Timed out waiting for screen processing"];
+    }
+
+    NSDictionary *result = nil;
+    @try {
+        @autoreleasepool {
+            result = task();
+        }
+    } @finally {
+        dispatch_semaphore_signal(_screenTaskSemaphore);
+    }
+    return result;
+}
+
 - (NSDictionary *)handleToolsCall:(id)reqId params:(NSDictionary *)params {
     if (![params isKindOfClass:[NSDictionary class]]) {
         return [self mcpError:reqId code:-32602 message:@"Invalid params: expected object"];
@@ -2207,7 +2241,9 @@ static NSString *MCPLogId(id reqId) {
     else if ([toolName isEqualToString:@"get_screen_info"]) {
         return [self executeScreenInfo:reqId];
     } else if ([toolName isEqualToString:@"screenshot"]) {
-        return [self executeScreenshot:reqId args:args];
+        return [self performScreenTaskForRequest:reqId task:^{
+            return [self executeScreenshot:reqId args:args];
+        }];
     }
     // Clipboard tools
     else if ([toolName isEqualToString:@"get_clipboard"]) {
@@ -2233,8 +2269,17 @@ static NSString *MCPLogId(id reqId) {
     } else if ([toolName isEqualToString:@"get_element_at_point"]) {
         return [self executeGetElementAtPoint:reqId args:args];
     } else if ([toolName isEqualToString:@"ocr_screen"]) {
-        return [self executeOCRScreen:reqId args:args];
+        return [self performScreenTaskForRequest:reqId task:^{
+            return [self executeOCRScreen:reqId args:args];
+        }];
     } else if ([toolName isEqualToString:@"describe_screen"]) {
+        BOOL includesImageWork = [args[@"include_ocr"] boolValue] ||
+                                 [args[@"include_screenshot"] boolValue];
+        if (includesImageWork) {
+            return [self performScreenTaskForRequest:reqId task:^{
+                return [self executeDescribeScreen:reqId args:args];
+            }];
+        }
         return [self executeDescribeScreen:reqId args:args];
     }
     // Text input tools

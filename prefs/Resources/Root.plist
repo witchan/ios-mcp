@@ -57,6 +57,36 @@
 		<dict>
 			<key>cell</key>
 			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>图像处理</string>
+			<key>footerText</key>
+			<string>限制截图和 OCR 同时处理的任务数。1 更节省内存，2 可提高高内存设备的吞吐量。修改后需要重启 SpringBoard。</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>default</key>
+			<integer>1</integer>
+			<key>defaults</key>
+			<string>com.witchan.ios-mcp.preferences</string>
+			<key>key</key>
+			<string>maxConcurrentScreenTasks</string>
+			<key>label</key>
+			<string>并发任务</string>
+			<key>validTitles</key>
+			<array>
+				<string>1</string>
+				<string>2</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<integer>1</integer>
+				<integer>2</integer>
+			</array>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
 			<key>id</key>
 			<string>debugLogGroup</string>
 			<key>label</key>

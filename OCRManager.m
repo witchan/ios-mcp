@@ -142,9 +142,11 @@ static CGImageRef OCRCreateDownsampled(CGImageRef src, CGFloat maxEdge) CF_RETUR
 
         // Downsample large captures before OCR (longest edge cap). Speeds up Vision on
         // high-res iPad screens; coordinates still map back via the logical image.size.
-        CGImageRef ocrImage = image.CGImage;
         CGImageRef downsampled = OCRCreateDownsampled(image.CGImage, 1600.0);
-        if (downsampled) ocrImage = downsampled;
+        CGImageRef ocrImage = downsampled ?: image.CGImage;
+        if (downsampled) {
+            image = nil;
+        }
 
         VNImageRequestHandler *handler = [[VNImageRequestHandler alloc] initWithCGImage:ocrImage options:@{}];
         NSError *performError = nil;

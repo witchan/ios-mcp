@@ -14,7 +14,7 @@
 } while (0)
 
 typedef struct __IOSurface *IOSurfaceRef;
-typedef UIImage *(*UICreateScreenUIImageFunc)(void);
+typedef UIImage *(*UICreateScreenUIImageFunc)(void) NS_RETURNS_RETAINED;
 typedef CGImageRef (*UICreateCGImageFromIOSurfaceFunc)(IOSurfaceRef surface);
 typedef CGImageRef (*CARenderServerCaptureDisplayFunc)(uint32_t serverPort, CFStringRef displayName, CFDictionaryRef options);
 
@@ -26,6 +26,14 @@ static const NSUInteger kMCPScreenshotTargetBytes = 400 * 1024;
 static const CGFloat kMCPScreenshotInitialJPEGQuality = 0.82;
 static const CGFloat kMCPScreenshotMinimumJPEGQuality = 0.30;
 static const NSInteger kMCPScreenshotJPEGSearchPasses = 6;
+
+static NSData *MCPJPEGRepresentation(UIImage *image, CGFloat quality) {
+    NSData *data = nil;
+    @autoreleasepool {
+        data = UIImageJPEGRepresentation(image, quality);
+    }
+    return data;
+}
 
 /// Point-space target size for a pixel-space capture of `pixelSize`.
 ///
@@ -295,11 +303,13 @@ __attribute__((constructor)) static void _resolveScreenImageFunc(void) {
 - (NSDictionary *)takeScreenshotPayload {
     __block NSDictionary *payload = nil;
     dispatch_block_t block = ^{
-        payload = [self privateScreenshotPayload];
-        if (!payload) {
-            SCREEN_LOG(@"Private screenshot APIs produced no encodable image, falling back to window capture");
-            UIImage *image = [self fallbackScreenshotImage];
-            payload = [self payloadByEncodingImage:image source:@"window_capture"];
+        @autoreleasepool {
+            payload = [self privateScreenshotPayload];
+            if (!payload) {
+                SCREEN_LOG(@"Private screenshot APIs produced no encodable image, falling back to window capture");
+                UIImage *image = [self fallbackScreenshotImage];
+                payload = [self payloadByEncodingImage:image source:@"window_capture"];
+            }
         }
     };
 
@@ -315,10 +325,6 @@ __attribute__((constructor)) static void _resolveScreenImageFunc(void) {
     UIImage *image = nil;
     NSDictionary *payload = nil;
 
-    NSData *screenData = [ScreenManager getScreenDataWithQuantity:(NSInteger)round(kMCPScreenshotInitialJPEGQuality * 100.0)];
-    payload = [self payloadByEncodingImageData:screenData source:@"getScreenDataWithQuantity"];
-    if (payload) return payload;
-
     image = [self screenshotImageFromRenderServerCapture];
     payload = [self payloadByEncodingImage:image source:@"render_server"];
     if (payload) return payload;
@@ -329,6 +335,10 @@ __attribute__((constructor)) static void _resolveScreenImageFunc(void) {
 
     image = [self screenshotImageFromIOSurface];
     payload = [self payloadByEncodingImage:image source:@"createScreenIOSurface"];
+    if (payload) return payload;
+
+    NSData *screenData = [ScreenManager getScreenDataWithQuantity:(NSInteger)round(kMCPScreenshotInitialJPEGQuality * 100.0)];
+    payload = [self payloadByEncodingImageData:screenData source:@"getScreenDataWithQuantity"];
     if (payload) return payload;
 
     return nil;
@@ -400,9 +410,11 @@ __attribute__((constructor)) static void _resolveScreenImageFunc(void) {
 - (UIImage *)captureScreenImage {
     __block UIImage *image = nil;
     dispatch_block_t block = ^{
-        image = [self privateScreenshotImage];
-        if (!image) {
-            image = [self fallbackScreenshotImage];
+        @autoreleasepool {
+            image = [self privateScreenshotImage];
+            if (!image) {
+                image = [self fallbackScreenshotImage];
+            }
         }
     };
     if ([NSThread isMainThread]) {
@@ -589,11 +601,11 @@ __attribute__((constructor)) static void _resolveScreenImageFunc(void) {
 }
 
 - (NSData *)JPEGDataForImage:(UIImage *)image maxBytes:(NSUInteger)maxBytes {
-    NSData *bestData = UIImageJPEGRepresentation(image, kMCPScreenshotInitialJPEGQuality);
+    NSData *bestData = MCPJPEGRepresentation(image, kMCPScreenshotInitialJPEGQuality);
     if (!bestData) return nil;
     if (bestData.length <= maxBytes) return bestData;
 
-    NSData *minimumData = UIImageJPEGRepresentation(image, kMCPScreenshotMinimumJPEGQuality);
+    NSData *minimumData = MCPJPEGRepresentation(image, kMCPScreenshotMinimumJPEGQuality);
     if (!minimumData) return bestData;
     if (minimumData.length > maxBytes) return minimumData;
 
@@ -605,7 +617,7 @@ __attribute__((constructor)) static void _resolveScreenImageFunc(void) {
     CGFloat high = kMCPScreenshotInitialJPEGQuality;
     for (NSInteger pass = 0; pass < kMCPScreenshotJPEGSearchPasses; pass++) {
         CGFloat quality = (low + high) / 2.0;
-        NSData *candidate = UIImageJPEGRepresentation(image, quality);
+        NSData *candidate = MCPJPEGRepresentation(image, quality);
         if (!candidate) break;
 
         if (candidate.length > maxBytes) {

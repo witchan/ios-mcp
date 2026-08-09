@@ -6,10 +6,14 @@
 #define IOS_MCP_DEFAULT_PORT 8090
 #define IOS_MCP_MIN_PORT 1024
 #define IOS_MCP_MAX_PORT 65535
+#define IOS_MCP_DEFAULT_MAX_CONCURRENT_SCREEN_TASKS 1
+#define IOS_MCP_MIN_CONCURRENT_SCREEN_TASKS 1
+#define IOS_MCP_MAX_CONCURRENT_SCREEN_TASKS 2
 #define IOS_MCP_PREFERENCES_DOMAIN @"com.witchan.ios-mcp.preferences"
 #define IOS_MCP_ENABLED_PREFERENCE_KEY @"enabled"
 #define IOS_MCP_PORT_PREFERENCE_KEY @"port"
 #define IOS_MCP_DEBUG_LOGGING_PREFERENCE_KEY @"debugLoggingEnabled"
+#define IOS_MCP_MAX_CONCURRENT_SCREEN_TASKS_PREFERENCE_KEY @"maxConcurrentScreenTasks"
 #define IOS_MCP_DARWIN_NOTIFICATION_START CFSTR("com.witchan.ios-mcp.control/start")
 #define IOS_MCP_DARWIN_NOTIFICATION_STOP CFSTR("com.witchan.ios-mcp.control/stop")
 
@@ -48,6 +52,23 @@ static inline uint16_t IOSMCPConfiguredPort(void) {
         CFRelease(value);
     }
     return port;
+}
+
+static inline NSInteger IOSMCPConfiguredMaxConcurrentScreenTasks(void) {
+    NSInteger limit = IOS_MCP_DEFAULT_MAX_CONCURRENT_SCREEN_TASKS;
+    CFPreferencesAppSynchronize((__bridge CFStringRef)IOS_MCP_PREFERENCES_DOMAIN);
+    CFPropertyListRef value = CFPreferencesCopyAppValue(
+        (__bridge CFStringRef)IOS_MCP_MAX_CONCURRENT_SCREEN_TASKS_PREFERENCE_KEY,
+        (__bridge CFStringRef)IOS_MCP_PREFERENCES_DOMAIN);
+    if (value) {
+        id preference = (__bridge id)value;
+        if ([preference respondsToSelector:@selector(integerValue)]) {
+            limit = [preference integerValue];
+        }
+        CFRelease(value);
+    }
+    return MAX(IOS_MCP_MIN_CONCURRENT_SCREEN_TASKS,
+               MIN(limit, IOS_MCP_MAX_CONCURRENT_SCREEN_TASKS));
 }
 
 static inline NSString *IOSMCPCurrentLANIPAddress(void) {
