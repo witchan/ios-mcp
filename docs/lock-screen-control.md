@@ -31,6 +31,12 @@ Preference key：`lockScreenProtectionEnabled`，型別為 Boolean。未設定�
 
 ## 驗證範圍
 
-已通過 preference header 與 `MCPServer.m` 的 `clang -fsyntax-only`、設定 plist 語法及 Git whitespace 檢查。
+2026-09-05 已在 iPhone 15、iOS 17.2.1、rootless 環境安裝並驗證。建置使用 Theos 的 rootless 方案，`arm64`／`arm64e` CodeDirectory hashes 已核對；安裝後的 binaries 亦與 DEB 一致。
 
-尚未完成完整套件建置與真機安裝；Settings 開關、跨程序即時更新、密碼輸入及重新啟用攔截仍需真機驗證。關閉此開關不保證系統密碼輸入一定成功。
+- 設定頁開關可即時讀回開啟／關閉狀態，重啟 SpringBoard 後仍保留設定。
+- 保護關閉且裝置鎖定／熄屏時，Shell、root helper，以及既有暫存檔案的寫入、讀回及刪除均通過。
+- 喚醒並進入密碼畫面後，點按已觀測的數字鍵盤可成功解鎖。`input_text` 的成功回覆不代表密碼已輸入，應以 `locked=false` 讀回作準。
+- rootless 路徑透過 Theos `rootless.h`／libroot 解析，避免僅使用 roothide stub 時找不到 Shell 或 helper。
+- 套件 metadata 應以 `root:wheel`（uid/gid 0）封裝，`mcp-root` 必須是 `4755`；已安裝的 helper 以 `id` 驗證可取得 root。
+
+本次沿用同版原始套件的未修改 helpers，只重新編譯 MCP 與設定頁。未測試 rootful／roothide 變種、全部 MCP 工具，以及開啟保護後再次鎖屏的完整攔截流程。`write_file` 不會自動建立父目錄。
