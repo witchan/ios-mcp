@@ -5,6 +5,9 @@
 #import <spawn.h>
 #include <string.h>
 #include <roothide.h>
+#ifdef MCP_ROOTLESS
+#import <rootless.h>
+#endif
 #import "../IOSMCPPreferences.h"
 #import "../MCPLogger.h"
 
@@ -68,8 +71,13 @@ static uint32_t IOSMCPCRC32(NSData *data) {
 
 static NSString *IOSMCPKillallPath(void) {
     NSArray<NSString *> *candidatePaths = @[
+#ifdef MCP_ROOTLESS
+        ROOT_PATH_NS(@"/usr/bin/killall") ?: @"",
+        ROOT_PATH_NS(@"/bin/killall") ?: @"",
+#else
         jbroot(@"/usr/bin/killall") ?: @"",
         jbroot(@"/bin/killall") ?: @"",
+#endif
         @"/usr/bin/killall",
         @"/bin/killall"
     ];

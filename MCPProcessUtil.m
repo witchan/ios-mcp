@@ -1,5 +1,8 @@
 #import "MCPProcessUtil.h"
 #include <roothide.h>
+#ifdef MCP_ROOTLESS
+#import <rootless.h>
+#endif
 #import <dispatch/dispatch.h>
 #import <errno.h>
 #import <fcntl.h>
@@ -53,7 +56,11 @@ NSString *MCPResolvedJailbreakPath(NSString *path) {
     if (!path.length) return @"";
 
     NSFileManager *fm = [NSFileManager defaultManager];
+#ifdef MCP_ROOTLESS
+    NSString *resolved = ROOT_PATH_NS(path);
+#else
     NSString *resolved = jbroot(path);
+#endif
     if (resolved.length && [fm fileExistsAtPath:resolved]) return resolved;
     if ([fm fileExistsAtPath:path]) return path;
     return resolved.length ? resolved : path;
