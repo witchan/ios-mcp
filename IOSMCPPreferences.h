@@ -10,8 +10,25 @@
 #define IOS_MCP_ENABLED_PREFERENCE_KEY @"enabled"
 #define IOS_MCP_PORT_PREFERENCE_KEY @"port"
 #define IOS_MCP_DEBUG_LOGGING_PREFERENCE_KEY @"debugLoggingEnabled"
+#define IOS_MCP_LOCK_SCREEN_PROTECTION_PREFERENCE_KEY @"lockScreenProtectionEnabled"
 #define IOS_MCP_DARWIN_NOTIFICATION_START CFSTR("com.witchan.ios-mcp.control/start")
 #define IOS_MCP_DARWIN_NOTIFICATION_STOP CFSTR("com.witchan.ios-mcp.control/stop")
+
+static inline BOOL IOSMCPLockScreenProtectionEnabled(void) {
+    CFPreferencesAppSynchronize((__bridge CFStringRef)IOS_MCP_PREFERENCES_DOMAIN);
+    CFPropertyListRef value = CFPreferencesCopyAppValue(
+        (__bridge CFStringRef)IOS_MCP_LOCK_SCREEN_PROTECTION_PREFERENCE_KEY,
+        (__bridge CFStringRef)IOS_MCP_PREFERENCES_DOMAIN);
+    if (!value) return YES;
+
+    // 未設定或資料類型不符時，沿用原版的鎖定保護。
+    BOOL enabled = YES;
+    if (CFGetTypeID(value) == CFBooleanGetTypeID()) {
+        enabled = CFBooleanGetValue((CFBooleanRef)value);
+    }
+    CFRelease(value);
+    return enabled;
+}
 
 static inline BOOL IOSMCPParsePortValue(id value, uint16_t *outPort) {
     long long parsed = 0;

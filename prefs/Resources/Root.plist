@@ -29,6 +29,26 @@
 		<dict>
 			<key>cell</key>
 			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>鎖定畫面控制</string>
+			<key>footerText</key>
+			<string>關閉後，MCP 可在鎖定或熄屏時執行點擊、文字輸入、Shell 等操作。iPhone 密碼仍然有效。變更即時生效，可隨時重新開啟。</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.witchan.ios-mcp.preferences</string>
+			<key>key</key>
+			<string>lockScreenProtectionEnabled</string>
+			<key>label</key>
+			<string>鎖定畫面保護</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
 			<key>id</key>
 			<string>httpPortGroup</string>
 			<key>label</key>

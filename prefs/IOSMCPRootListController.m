@@ -147,6 +147,9 @@ static BOOL IOSMCPEnabledPreference(void) {
 
 - (id)readPreferenceValue:(PSSpecifier *)specifier {
     NSString *key = [specifier propertyForKey:@"key"];
+    if ([key isEqualToString:IOS_MCP_LOCK_SCREEN_PROTECTION_PREFERENCE_KEY]) {
+        return @(IOSMCPLockScreenProtectionEnabled());
+    }
     if ([key isEqualToString:IOS_MCP_PORT_PREFERENCE_KEY]) {
         return [NSString stringWithFormat:@"%u", (unsigned int)IOSMCPConfiguredPort()];
     }
@@ -156,6 +159,15 @@ static BOOL IOSMCPEnabledPreference(void) {
 
 - (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)specifier {
     NSString *key = [specifier propertyForKey:@"key"];
+    if ([key isEqualToString:IOS_MCP_LOCK_SCREEN_PROTECTION_PREFERENCE_KEY]) {
+        if (![value isKindOfClass:[NSNumber class]]) return;
+        CFPreferencesSetAppValue(
+            (__bridge CFStringRef)IOS_MCP_LOCK_SCREEN_PROTECTION_PREFERENCE_KEY,
+            [value boolValue] ? kCFBooleanTrue : kCFBooleanFalse,
+            (__bridge CFStringRef)IOS_MCP_PREFERENCES_DOMAIN);
+        CFPreferencesAppSynchronize((__bridge CFStringRef)IOS_MCP_PREFERENCES_DOMAIN);
+        return;
+    }
     if (![key isEqualToString:IOS_MCP_PORT_PREFERENCE_KEY]) {
         [super setPreferenceValue:value specifier:specifier];
         return;
